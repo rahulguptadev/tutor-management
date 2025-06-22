@@ -1,0 +1,242 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  PROCESSING
+}
+
+enum ActivityType {
+  CLASS_CREATED
+  CLASS_UPDATED
+  LEAD_CREATED
+  LEAD_UPDATED
+  FEE_CREATED
+  FEE_PAID
+  PAYOUT_CREATED
+  PAYOUT_PAID
+  CALENDAR_EVENT_CREATED
+  CALENDAR_EVENT_UPDATED
+  CALENDAR_EVENT_DELETED
+  SUBJECT_CREATED
+  SUBJECT_UPDATED
+  SUBJECT_DELETED
+  TEACHER_SUBJECT_ADDED
+  TEACHER_SUBJECT_REMOVED
+}
+
+enum RecurrenceType {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  NONE
+}
+
+enum EventType {
+  CLASS
+  HOLIDAY
+  BREAK
+  AVAILABILITY
+  OTHER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          UserRole
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  teacher       Teacher?
+  student       Student?
+  lead          Lead?
+  activities    Activity[]
+}
+
+model Subject {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  teachers    TeacherSubject[]
+  classes     Class[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Teacher {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  subjects      TeacherSubject[]
+  bio           String?
+  hourlyRate    Float
+  availability  Json      // Store availability as JSON
+  classes       Class[]
+  payouts       Payout[]
+  calendarEvents CalendarEvent[]
+  availabilities TeacherAvailability[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model TeacherSubject {
+  id          String    @id @default(cuid())
+  teacherId   String
+  teacher     Teacher   @relation(fields: [teacherId], references: [id])
+  subjectId   String
+  subject     Subject   @relation(fields: [subjectId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([teacherId, subjectId])
+}
+
+model Student {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  grade         String?
+  school        String?
+  mobileNumber  String?
+  classes       Class[]
+  fees          Fee[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Lead {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  status        LeadStatus @default(NEW)
+  source        String?
+  notes         String?
+  convertedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Class {
+  id            String    @id @default(cuid())
+  teacherId     String
+  teacher       Teacher   @relation(fields: [teacherId], references: [id])
+  studentId     String
+  student       Student   @relation(fields: [studentId], references: [id])
+  subjectId     String
+  subject       Subject   @relation(fields: [subjectId], references: [id])
+  startTime     DateTime
+  endTime       DateTime
+  status        String    // SCHEDULED, COMPLETED, CANCELLED
+  notes         String?
+  isRecurring   Boolean   @default(false)
+  recurrence    RecurrenceType?
+  recurrenceEnd DateTime?
+  calendarEvent CalendarEvent?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Fee {
+  id            String    @id @default(cuid())
+  studentId     String
+  student       Student   @relation(fields: [studentId], references: [id])
+  amount        Float
+  dueDate       DateTime
+  status        PaymentStatus
+  paidAmount    Float     @default(0)
+  paidAt        DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Payout {
+  id            String    @id @default(cuid())
+  teacherId     String
+  teacher       Teacher   @relation(fields: [teacherId], references: [id])
+  amount        Float
+  status        PayoutStatus
+  paidAt        DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Activity {
+  id          String      @id @default(cuid())
+  type        ActivityType
+  description String
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model CalendarEvent {
+  id            String        @id @default(cuid())
+  type          EventType
+  title         String
+  description   String?
+  startTime     DateTime
+  endTime       DateTime
+  isRecurring   Boolean       @default(false)
+  recurrence    RecurrenceType?
+  recurrenceEnd DateTime?
+  teacherId     String?
+  teacher       Teacher?      @relation(fields: [teacherId], references: [id])
+  classId       String?       @unique
+  class         Class?        @relation(fields: [classId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model TeacherAvailability {
+  id            String    @id @default(cuid())
+  teacherId     String
+  teacher       Teacher   @relation(fields: [teacherId], references: [id])
+  dayOfWeek     Int       // 0-6 (Sunday-Saturday)
+  startTime     String    // HH:mm format
+  endTime       String    // HH:mm format
+  isAvailable   Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([teacherId, dayOfWeek, startTime, endTime])
+}
