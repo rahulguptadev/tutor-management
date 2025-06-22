@@ -3,7 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { logActivity } from '@/lib/activity'
-import type { Activity } from '@/generated/prisma'
+import { ActivityType } from '@prisma/client'
+import type { Activity } from '@prisma/client'
 
 // GET /api/teachers/[id] - Get teacher details
 export async function GET(
@@ -103,7 +104,7 @@ export async function PUT(
 
     // Log the activity
     await logActivity(
-      'CLASS_UPDATED' as Activity['type'],
+      ActivityType.CLASS_UPDATED,
       `Updated teacher ${id}`,
       session.user.id
     )
@@ -152,7 +153,7 @@ export async function DELETE(
 
     // Log the activity
     await logActivity(
-      'CALENDAR_EVENT_DELETED' as Activity['type'],
+      ActivityType.CALENDAR_EVENT_DELETED,
       `Deleted teacher ${id}`,
       session.user.id
     )
