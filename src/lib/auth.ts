@@ -25,6 +25,15 @@ declare module "next-auth/jwt" {
   }
 }
 
+// Hardcoded admin user
+const HARDCODED_ADMIN = {
+  email: "admin@example.com",
+  password: "admin123",
+  name: "Admin User",
+  role: "ADMIN",
+  id: "hardcoded-admin-id"
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
@@ -45,6 +54,17 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
+        // Check for hardcoded admin user first
+        if (credentials.email === HARDCODED_ADMIN.email && credentials.password === HARDCODED_ADMIN.password) {
+          return {
+            id: HARDCODED_ADMIN.id,
+            email: HARDCODED_ADMIN.email,
+            name: HARDCODED_ADMIN.name,
+            role: HARDCODED_ADMIN.role,
+          }
+        }
+
+        // Fallback to database authentication
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email,
@@ -82,6 +102,17 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async jwt({ token, user }) {
+      // Handle hardcoded admin user
+      if (token.email === HARDCODED_ADMIN.email) {
+        return {
+          id: HARDCODED_ADMIN.id,
+          name: HARDCODED_ADMIN.name,
+          email: HARDCODED_ADMIN.email,
+          role: HARDCODED_ADMIN.role,
+        }
+      }
+
+      // Handle database users
       const dbUser = await prisma.user.findFirst({
         where: {
           email: token.email!,
