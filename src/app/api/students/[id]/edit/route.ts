@@ -10,7 +10,7 @@ export async function POST(
     const formData = await request.formData();
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
-    const grade = formData.get('grade') as string;
+    const gradeId = formData.get('gradeId') as string;
     const school = formData.get('school') as string;
     const mobileNumber = formData.get('mobileNumber') as string;
     const fatherName = formData.get('fatherName') as string;
@@ -23,7 +23,7 @@ export async function POST(
     await prisma.student.update({
       where: { id },
       data: {
-        grade,
+        gradeId: gradeId || null,
         school,
         mobileNumber,
         fatherName,

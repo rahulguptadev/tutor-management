@@ -28,19 +28,37 @@ interface Subject {
   name: string
 }
 
+interface Grade {
+  id: string
+  name: string
+  curriculum: string
+  level: number
+  isActive: boolean
+}
+
 export default function NewStudentPage() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [subjects, setSubjects] = useState<Subject[]>([])
+  const [grades, setGrades] = useState<Grade[]>([])
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([])
+  const [selectedGradeId, setSelectedGradeId] = useState<string>('')
 
-  // Fetch subjects on mount
+  // Fetch subjects and grades on mount
   useEffect(() => {
-    fetch('/api/subjects')
-      .then(res => res.json())
-      .then(setSubjects)
-      .catch(() => setSubjects([]))
+    Promise.all([
+      fetch('/api/subjects').then(res => res.json()),
+      fetch('/api/grades').then(res => res.json())
+    ])
+      .then(([subjectsData, gradesData]) => {
+        setSubjects(subjectsData)
+        setGrades(gradesData.filter((grade: Grade) => grade.isActive))
+      })
+      .catch(() => {
+        setSubjects([])
+        setGrades([])
+      })
   }, [])
 
   const {
@@ -66,6 +84,7 @@ export default function NewStudentPage() {
           ...data,
           email: defaultEmail,
           password: 'admin123',
+          gradeId: selectedGradeId || null,
           enrolledSubjectIds: selectedSubjectIds,
         }),
       })
@@ -134,12 +153,18 @@ export default function NewStudentPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   Grade
                 </label>
-                <input
-                  type="text"
-                  {...register('grade')}
-                  placeholder="e.g., 10th Grade"
+                <select
+                  value={selectedGradeId}
+                  onChange={(e) => setSelectedGradeId(e.target.value)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                />
+                >
+                  <option value="">Select a grade</option>
+                  {grades.map(grade => (
+                    <option key={grade.id} value={grade.id}>
+                      {grade.name} ({grade.curriculum})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

@@ -21,6 +21,13 @@ export default async function EditStudentPage({ params }: EditStudentPageProps) 
     where: { id },
     include: {
       user: true,
+      grade: {
+        select: {
+          id: true,
+          name: true,
+          curriculum: true,
+        },
+      },
       enrolledSubjects: {
         include: {
           subject: true,
@@ -36,6 +43,15 @@ export default async function EditStudentPage({ params }: EditStudentPageProps) 
   // Get all subjects for the multi-select
   const allSubjects = await prisma.subject.findMany({
     orderBy: { name: 'asc' },
+  })
+
+  // Get all grades for the dropdown
+  const allGrades = await prisma.grade.findMany({
+    where: { isActive: true },
+    orderBy: [
+      { level: 'asc' },
+      { name: 'asc' },
+    ],
   })
 
   return (
@@ -85,13 +101,18 @@ export default async function EditStudentPage({ params }: EditStudentPageProps) 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Grade</label>
-                <input
-                  type="text"
-                  name="grade"
-                  defaultValue={student.grade || ''}
-                  placeholder="e.g., 10th Grade"
+                <select
+                  name="gradeId"
+                  defaultValue={student.grade?.id || ''}
                   className="w-full px-3 py-2 border rounded"
-                />
+                >
+                  <option value="">Select a grade</option>
+                  {allGrades.map(grade => (
+                    <option key={grade.id} value={grade.id}>
+                      {grade.name} ({grade.curriculum})
+                    </option>
+                  ))}
+                </select>
               </div>
               
               <div>

@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       name, 
       email, 
       password, 
-      grade, 
+      gradeId, 
       school, 
       mobileNumber, 
       fatherName, 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       const student = await tx.student.create({
         data: {
           userId: user.id,
-          grade,
+          gradeId,
           school,
           mobileNumber,
           fatherName,

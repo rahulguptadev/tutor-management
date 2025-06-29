@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
     switch (reportType) {
       case 'students': {
-        if (grade) where.grade = grade
+        if (grade) where.gradeId = grade
         if (school) where.school = school
 
         const students = await prisma.student.findMany({
@@ -47,6 +47,12 @@ export async function GET(request: Request) {
                 email: true,
               },
             },
+            grade: {
+              select: {
+                name: true,
+                curriculum: true,
+              },
+            },
           },
           orderBy: { createdAt: 'desc' },
         })
@@ -55,7 +61,7 @@ export async function GET(request: Request) {
           'Student ID': student.id,
           'Name': student.user.name,
           'Email': student.user.email,
-          'Grade': student.grade || '',
+          'Grade': student.grade ? `${student.grade.name} (${student.grade.curriculum})` : '',
           'School': student.school || '',
           'Mobile Number': student.mobileNumber || '',
           'Created At': student.createdAt.toLocaleDateString(),

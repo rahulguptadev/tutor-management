@@ -26,18 +26,11 @@ async function main() {
     },
   })
 
-  // Create subjects first
+  // Create subjects
   const mathematics = await prisma.subject.create({
     data: {
       name: 'Mathematics',
       description: 'Advanced mathematics including algebra, calculus, and geometry',
-    },
-  })
-
-  const physics = await prisma.subject.create({
-    data: {
-      name: 'Physics',
-      description: 'Physics fundamentals and advanced concepts',
     },
   })
 
@@ -48,11 +41,44 @@ async function main() {
     },
   })
 
-  const literature = await prisma.subject.create({
+  const science = await prisma.subject.create({
     data: {
-      name: 'Literature',
-      description: 'Classic and contemporary literature',
+      name: 'Science',
+      description: 'General science including physics, chemistry, and biology',
     },
+  })
+
+  // Create grades
+  const grade10 = await prisma.grade.create({
+    data: {
+      name: '10th Grade',
+      level: 10,
+      curriculum: 'CBSE',
+      description: 'Class 10 CBSE curriculum',
+      isActive: true,
+    },
+  })
+
+  const grade11 = await prisma.grade.create({
+    data: {
+      name: '11th Grade',
+      level: 11,
+      curriculum: 'CBSE',
+      description: 'Class 11 CBSE curriculum',
+      isActive: true,
+    },
+  })
+
+  // Create grade-subject relationships
+  await prisma.gradeSubject.createMany({
+    data: [
+      { gradeId: grade10.id, subjectId: mathematics.id, isCore: true, order: 1 },
+      { gradeId: grade10.id, subjectId: english.id, isCore: true, order: 2 },
+      { gradeId: grade10.id, subjectId: science.id, isCore: true, order: 3 },
+      { gradeId: grade11.id, subjectId: mathematics.id, isCore: true, order: 1 },
+      { gradeId: grade11.id, subjectId: english.id, isCore: true, order: 2 },
+      { gradeId: grade11.id, subjectId: science.id, isCore: true, order: 3 },
+    ],
   })
 
   // Create teacher users and teachers
@@ -81,7 +107,7 @@ async function main() {
   await prisma.teacherSubject.createMany({
     data: [
       { teacherId: teacher1.id, subjectId: mathematics.id },
-      { teacherId: teacher1.id, subjectId: physics.id },
+      { teacherId: teacher1.id, subjectId: science.id },
     ],
   })
 
@@ -116,7 +142,7 @@ async function main() {
   await prisma.teacherSubject.createMany({
     data: [
       { teacherId: teacher2.id, subjectId: english.id },
-      { teacherId: teacher2.id, subjectId: literature.id },
+      { teacherId: teacher2.id, subjectId: science.id },
     ],
   })
 
@@ -140,7 +166,7 @@ async function main() {
   const student1 = await prisma.student.create({
     data: {
       userId: studentUser1.id,
-      grade: '10th',
+      gradeId: grade10.id,
       school: 'Central High',
     },
   })
@@ -155,7 +181,7 @@ async function main() {
   const student2 = await prisma.student.create({
     data: {
       userId: studentUser2.id,
-      grade: '11th',
+      gradeId: grade11.id,
       school: 'Westview School',
     },
   })

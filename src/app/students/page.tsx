@@ -16,7 +16,10 @@ interface SearchParams {
 
 type StudentRow = {
   id: string;
-  grade: string | null;
+  grade: {
+    name: string;
+    curriculum: string;
+  } | null;
   school: string | null;
   user: {
     name: string;
@@ -52,15 +55,22 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
       { user: { email: { contains: search, mode: 'insensitive' } } },
     ];
   }
-  if (grade) where.grade = grade;
+  if (grade) where.gradeId = grade;
   if (school) where.school = school;
 
   // Get unique grades and schools for filters
-  const [grades, schools] = await Promise.all([
-    prisma.student.findMany({
-      select: { grade: true },
-      distinct: ['grade'],
-      where: { grade: { not: null } },
+  const [gradeData, schools] = await Promise.all([
+    prisma.grade.findMany({
+      select: { 
+        id: true,
+        name: true,
+        curriculum: true,
+      },
+      where: { isActive: true },
+      orderBy: [
+        { level: 'asc' },
+        { name: 'asc' },
+      ],
     }),
     prisma.student.findMany({
       select: { school: true },
@@ -68,7 +78,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
       where: { school: { not: null } },
     }),
   ]);
-  const gradeOptions: string[] = Array.from(new Set(grades.map((g: { grade: string | null }) => g.grade).filter(Boolean) as string[]));
+  const gradeOptions = gradeData.map((g) => ({ id: g.id, name: `${g.name} (${g.curriculum})` }));
   const schoolOptions: string[] = Array.from(new Set(schools.map((s: { school: string | null }) => s.school).filter(Boolean) as string[]));
 
   // Fetch students
@@ -80,6 +90,12 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
           select: {
             name: true,
             email: true,
+          },
+        },
+        grade: {
+          select: {
+            name: true,
+            curriculum: true,
           },
         },
         enrolledSubjects: {
@@ -120,8 +136,8 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             />
             <select name="grade" defaultValue={grade} className="px-3 py-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 w-full md:w-40">
               <option value="">All Grades</option>
-              {gradeOptions.map((g: string) => (
-                <option key={g} value={g}>{g}</option>
+              {gradeOptions.map((g: { id: string; name: string }) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </select>
             <select name="school" defaultValue={school} className="px-3 py-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 w-full md:w-48">
@@ -153,7 +169,16 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                     <td className="px-6 py-4 whitespace-nowrap font-bold text-blue-700">{idx + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{student.user.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{student.user.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{student.grade || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                      {student.grade ? (
+                        <div>
+                          <div className="font-medium">{student.grade.name}</div>
+                          <div className="text-sm text-gray-500">{student.grade.curriculum}</div>
+                        </div>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{student.school || '-'}</td>
                     <td className="px-6 py-4 text-gray-700">
                       {student.enrolledSubjects.length > 0 ? (

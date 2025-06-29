@@ -58,7 +58,7 @@ export default function ReportsPage() {
       rows = data.map((s: any) => ({
         name: s.user?.name,
         email: s.user?.email,
-        grade: s.grade,
+        grade: s.grade ? `${s.grade.name} (${s.grade.curriculum})` : '-',
       }));
     } else if (tab === "teachers") {
       headers = ["name", "email", "phone", "subjects"];
@@ -165,7 +165,7 @@ export default function ReportsPage() {
                   <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
                   <td className="px-4 py-2">{s.user?.name}</td>
                   <td className="px-4 py-2">{s.user?.email}</td>
-                  <td className="px-4 py-2">{s.grade}</td>
+                  <td className="px-4 py-2">{s.grade ? `${s.grade.name} (${s.grade.curriculum})` : '-'}</td>
                 </tr>
               ))}
             </tbody>

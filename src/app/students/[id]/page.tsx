@@ -13,6 +13,13 @@ export default async function StudentDetailPage({ params }: any) {
           email: true,
         },
       },
+      grade: {
+        select: {
+          name: true,
+          curriculum: true,
+          level: true,
+        },
+      },
       enrolledSubjects: {
         select: {
           name: true,
@@ -49,7 +56,7 @@ export default async function StudentDetailPage({ params }: any) {
       <div className="bg-white rounded shadow p-6 mb-6">
         <p><strong>Name:</strong> {student.user.name}</p>
         <p><strong>Email:</strong> {student.user.email}</p>
-        <p><strong>Grade:</strong> {student.grade || '-'}</p>
+        <p><strong>Grade:</strong> {student.grade ? `${student.grade.name} (${student.grade.curriculum})` : '-'}</p>
         <p><strong>School:</strong> {student.school || '-'}</p>
         <p><strong>Mobile Number:</strong> {student.mobileNumber || '-'}</p>
         <p><strong>Father's Name:</strong> {student.fatherName || '-'}</p>
