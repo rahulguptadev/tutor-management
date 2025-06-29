@@ -13,7 +13,19 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { name, email, password, grade, school, mobileNumber } = body
+    const { 
+      name, 
+      email, 
+      password, 
+      grade, 
+      school, 
+      mobileNumber, 
+      fatherName, 
+      fatherContact, 
+      motherName, 
+      motherContact, 
+      enrolledSubjectIds 
+    } = body
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -43,6 +55,13 @@ export async function POST(req: Request) {
           grade,
           school,
           mobileNumber,
+          fatherName,
+          fatherContact,
+          motherName,
+          motherContact,
+          enrolledSubjects: {
+            connect: enrolledSubjectIds?.map((subjectId: string) => ({ id: subjectId })) || []
+          }
         },
       })
 

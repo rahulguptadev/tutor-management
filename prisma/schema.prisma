@@ -101,6 +101,7 @@ model Subject {
   teachers    TeacherSubject[]
   classes     Class[]
   demoClasses DemoClass[]
+  enrolledStudents Student[] @relation("StudentEnrolledSubjects")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -142,6 +143,11 @@ model Student {
   grade         String?
   school        String?
   mobileNumber  String?
+  fatherName    String?
+  fatherContact String?
+  motherName    String?
+  motherContact String?
+  enrolledSubjects Subject[] @relation("StudentEnrolledSubjects")
   classes       Class[]
   fees          Fee[]
   createdAt     DateTime  @default(now())

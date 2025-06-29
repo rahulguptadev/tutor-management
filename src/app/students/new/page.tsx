@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { useForm } from 'react-hook-form'
@@ -14,14 +14,34 @@ const studentSchema = z.object({
   grade: z.string().optional(),
   school: z.string().optional(),
   mobileNumber: z.string().optional(),
+  fatherName: z.string().optional(),
+  fatherContact: z.string().optional(),
+  motherName: z.string().optional(),
+  motherContact: z.string().optional(),
+  enrolledSubjectIds: z.array(z.string()).optional(),
 })
 
 type StudentFormData = z.infer<typeof studentSchema>
+
+interface Subject {
+  id: string
+  name: string
+}
 
 export default function NewStudentPage() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [subjects, setSubjects] = useState<Subject[]>([])
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([])
+
+  // Fetch subjects on mount
+  useEffect(() => {
+    fetch('/api/subjects')
+      .then(res => res.json())
+      .then(setSubjects)
+      .catch(() => setSubjects([]))
+  }, [])
 
   const {
     register,
@@ -46,6 +66,7 @@ export default function NewStudentPage() {
           ...data,
           email: defaultEmail,
           password: 'admin123',
+          enrolledSubjectIds: selectedSubjectIds,
         }),
       })
 
@@ -60,6 +81,14 @@ export default function NewStudentPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSubjectToggle = (subjectId: string) => {
+    setSelectedSubjectIds(prev => 
+      prev.includes(subjectId) 
+        ? prev.filter(id => id !== subjectId)
+        : [...prev, subjectId]
+    )
   }
 
   return (
@@ -82,52 +111,139 @@ export default function NewStudentPage() {
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Name
-            </label>
-            <input
-              type="text"
-              {...register('name')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-            )}
+          {/* Student Basic Information */}
+          <div className="border-b border-gray-200 pb-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Student Information</h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Name *
+              </label>
+              <input
+                type="text"
+                {...register('name')}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Grade
+                </label>
+                <input
+                  type="text"
+                  {...register('grade')}
+                  placeholder="e.g., 10th Grade"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  School
+                </label>
+                <input
+                  type="text"
+                  {...register('school')}
+                  placeholder="School name"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Mobile Number
+              </label>
+              <input
+                type="tel"
+                {...register('mobileNumber')}
+                placeholder="+1234567890"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Grade
-            </label>
-            <input
-              type="text"
-              {...register('grade')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
+          {/* Parent Information */}
+          <div className="border-b border-gray-200 pb-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Parent Information</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Father's Name
+                </label>
+                <input
+                  type="text"
+                  {...register('fatherName')}
+                  placeholder="Father's full name"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Father's Contact
+                </label>
+                <input
+                  type="tel"
+                  {...register('fatherContact')}
+                  placeholder="+1234567890"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Mother's Name
+                </label>
+                <input
+                  type="text"
+                  {...register('motherName')}
+                  placeholder="Mother's full name"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Mother's Contact
+                </label>
+                <input
+                  type="tel"
+                  {...register('motherContact')}
+                  placeholder="+1234567890"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </div>
+            </div>
           </div>
 
+          {/* Enrolled Subjects */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              School
-            </label>
-            <input
-              type="text"
-              {...register('school')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Mobile Number
-            </label>
-            <input
-              type="tel"
-              {...register('mobileNumber')}
-              placeholder="+1234567890"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Enrolled Subjects</h3>
+            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+              {subjects.map(subject => (
+                <label key={subject.id} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedSubjectIds.includes(subject.id)}
+                    onChange={() => handleSubjectToggle(subject.id)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm">{subject.name}</span>
+                </label>
+              ))}
+              {subjects.length === 0 && (
+                <p className="text-sm text-gray-500">No subjects available</p>
+              )}
+            </div>
           </div>
 
           <div>

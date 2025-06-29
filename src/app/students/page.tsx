@@ -22,6 +22,9 @@ type StudentRow = {
     name: string;
     email: string;
   };
+  enrolledSubjects: {
+    name: string;
+  }[];
 };
 
 export default async function StudentsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -77,6 +80,11 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
           select: {
             name: true,
             email: true,
+          },
+        },
+        enrolledSubjects: {
+          select: {
+            name: true,
           },
         },
       },
@@ -135,6 +143,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Grade</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">School</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Subjects</th>
                   <th className="px-6 py-3"></th>
                 </tr>
               </thead>
@@ -146,6 +155,22 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{student.user.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{student.grade || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{student.school || '-'}</td>
+                    <td className="px-6 py-4 text-gray-700">
+                      {student.enrolledSubjects.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {student.enrolledSubjects.map((subject, index) => (
+                            <span
+                              key={subject.name}
+                              className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                            >
+                              {subject.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">No subjects</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <Link
                         href={`/students/${student.id}`}
@@ -164,7 +189,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                 ))}
                 {students.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                       No students found.
                     </td>
                   </tr>

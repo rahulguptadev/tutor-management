@@ -13,6 +13,11 @@ export default async function StudentDetailPage({ params }: any) {
           email: true,
         },
       },
+      enrolledSubjects: {
+        select: {
+          name: true,
+        },
+      },
       classes: {
         include: {
           teacher: {
@@ -47,6 +52,11 @@ export default async function StudentDetailPage({ params }: any) {
         <p><strong>Grade:</strong> {student.grade || '-'}</p>
         <p><strong>School:</strong> {student.school || '-'}</p>
         <p><strong>Mobile Number:</strong> {student.mobileNumber || '-'}</p>
+        <p><strong>Father's Name:</strong> {student.fatherName || '-'}</p>
+        <p><strong>Father's Contact:</strong> {student.fatherContact || '-'}</p>
+        <p><strong>Mother's Name:</strong> {student.motherName || '-'}</p>
+        <p><strong>Mother's Contact:</strong> {student.motherContact || '-'}</p>
+        <p><strong>Enrolled Subjects:</strong> {student.enrolledSubjects.length > 0 ? student.enrolledSubjects.map((s: any) => s.name).join(', ') : '-'}</p>
       </div>
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Classes</h2>

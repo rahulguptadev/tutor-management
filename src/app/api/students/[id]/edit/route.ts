@@ -13,6 +13,11 @@ export async function POST(
     const grade = formData.get('grade') as string;
     const school = formData.get('school') as string;
     const mobileNumber = formData.get('mobileNumber') as string;
+    const fatherName = formData.get('fatherName') as string;
+    const fatherContact = formData.get('fatherContact') as string;
+    const motherName = formData.get('motherName') as string;
+    const motherContact = formData.get('motherContact') as string;
+    const enrolledSubjectIds = formData.getAll('enrolledSubjectIds') as string[];
 
     // Update user and student
     await prisma.student.update({
@@ -21,6 +26,13 @@ export async function POST(
         grade,
         school,
         mobileNumber,
+        fatherName,
+        fatherContact,
+        motherName,
+        motherContact,
+        enrolledSubjects: {
+          set: enrolledSubjectIds.map((subjectId) => ({ id: subjectId })),
+        },
         user: {
           update: {
             name,
