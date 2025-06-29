@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Classes', href: '/classes' },
   { name: 'Fees', href: '/fees' },
   { name: 'Payouts', href: '/payouts' },
+  { name: 'Subjects', href: '/subjects' },
   { name: 'Leads', href: '/leads' },
 ]
 

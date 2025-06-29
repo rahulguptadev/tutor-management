@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { DashboardLayout as Layout } from '@/components/dashboard-layout'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import Select from 'react-select'
 
 const teacherSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -23,6 +24,16 @@ export default function NewTeacherPage() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [subjectsList, setSubjectsList] = useState<{ id: string; name: string }[]>([])
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([])
+
+  // Fetch subjects on mount
+  useEffect(() => {
+    fetch('/api/subjects')
+      .then(res => res.json())
+      .then(setSubjectsList)
+      .catch(() => setSubjectsList([]))
+  }, [])
 
   const {
     register,
@@ -32,9 +43,17 @@ export default function NewTeacherPage() {
     resolver: zodResolver(teacherSchema),
   })
 
+  const subjectOptions = subjectsList.map(subject => ({ value: subject.id, label: subject.name }))
+
   async function onSubmit(data: TeacherFormData) {
     setError('')
     setLoading(true)
+
+    if (selectedSubjectIds.length === 0) {
+      setError('Please select at least one subject.')
+      setLoading(false)
+      return
+    }
 
     try {
       const response = await fetch('/api/teachers', {
@@ -42,7 +61,7 @@ export default function NewTeacherPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          subjects: data.subjects.split(',').map(s => s.trim()),
+          subjects: selectedSubjectIds,
           hourlyRate: parseFloat(data.hourlyRate),
           availability: data.availability ? JSON.parse(data.availability) : {},
         }),
@@ -125,17 +144,17 @@ export default function NewTeacherPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Subjects (comma-separated)
+              Subjects
             </label>
-            <input
-              type="text"
-              {...register('subjects')}
-              placeholder="e.g., Mathematics, Physics, Chemistry"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            <Select
+              isMulti
+              options={subjectOptions}
+              value={subjectOptions.filter(opt => selectedSubjectIds.includes(opt.value))}
+              onChange={selected => setSelectedSubjectIds(selected.map(opt => opt.value))}
+              className="mt-1"
+              classNamePrefix="react-select"
+              placeholder="Select subjects..."
             />
-            {errors.subjects && (
-              <p className="mt-1 text-sm text-red-600">{errors.subjects.message}</p>
-            )}
           </div>
 
           <div>
