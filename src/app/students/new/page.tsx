@@ -9,8 +9,8 @@ import * as z from 'zod'
 
 const studentSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().optional(),
+  password: z.string().optional(),
   grade: z.string().optional(),
   school: z.string().optional(),
   mobileNumber: z.string().optional(),
@@ -35,11 +35,18 @@ export default function NewStudentPage() {
     setError('')
     setLoading(true)
 
+    const slugify = (str: string) => str.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '')
+    const defaultEmail = data.email || `${slugify(data.name)}@gmail.com`
+
     try {
       const response = await fetch('/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          email: defaultEmail,
+          password: 'admin123',
+        }),
       })
 
       if (!response.ok) {
@@ -86,34 +93,6 @@ export default function NewStudentPage() {
             />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              {...register('email')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              {...register('password')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
             )}
           </div>
 

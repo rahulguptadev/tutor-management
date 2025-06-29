@@ -10,9 +10,8 @@ import Select from 'react-select'
 
 const teacherSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  subjects: z.string().min(1, 'At least one subject is required'),
+  email: z.string().optional(),
+  password: z.string().optional(),
   hourlyRate: z.string().min(1, 'Hourly rate is required'),
   bio: z.string().optional(),
   availability: z.string().optional(),
@@ -55,12 +54,17 @@ export default function NewTeacherPage() {
       return
     }
 
+    const slugify = (str: string) => str.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '')
+    const defaultEmail = data.email || `${slugify(data.name)}@gmail.com`
+
     try {
       const response = await fetch('/api/teachers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
+          email: defaultEmail,
+          password: 'admin123',
           subjects: selectedSubjectIds,
           hourlyRate: parseFloat(data.hourlyRate),
           availability: data.availability ? JSON.parse(data.availability) : {},
@@ -111,34 +115,6 @@ export default function NewTeacherPage() {
             />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              {...register('email')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              {...register('password')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
             )}
           </div>
 
