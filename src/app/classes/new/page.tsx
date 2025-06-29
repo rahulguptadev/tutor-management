@@ -190,7 +190,7 @@ export default function NewClassPage() {
               <option value="">Select a teacher</option>
               {teachers.map(teacher => (
                 <option key={teacher.id} value={teacher.id}>
-                  {teacher.user.name} ({teacher.subjects.join(', ')})
+                  {teacher.user.name} ({(teacher.subjects ?? []).join(', ')})
                 </option>
               ))}
             </select>

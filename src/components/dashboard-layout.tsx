@@ -12,6 +12,7 @@ const navigationGroups = [
     icon: FiHome,
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: FiHome },
+      { name: 'Reports', href: '/reports', icon: FiLayers },
     ],
   },
   {
