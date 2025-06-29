@@ -56,6 +56,7 @@ export async function PUT(
     const body = await request.json();
     const name = body.name as string;
     const email = body.email as string;
+    const phoneNumber = body.phoneNumber as string;
     const subjects = body.subjects;
     const hourlyRate = body.hourlyRate;
     const bio = body.bio;
@@ -85,6 +86,7 @@ export async function PUT(
       const updatedTeacher = await tx.teacher.update({
         where: { id: id },
         data: {
+          phoneNumber,
           subjects,
           hourlyRate,
           bio,

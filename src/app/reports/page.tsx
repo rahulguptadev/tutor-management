@@ -61,10 +61,11 @@ export default function ReportsPage() {
         grade: s.grade,
       }));
     } else if (tab === "teachers") {
-      headers = ["name", "email", "subjects"];
+      headers = ["name", "email", "phone", "subjects"];
       rows = data.map((t: any) => ({
         name: t.user?.name,
         email: t.user?.email,
+        phone: t.phoneNumber || '-',
         subjects: (t.subjects ?? []).map((ts: any) => ts.subject?.name).join("; ") ?? "",
       }));
     } else if (tab === "classes") {
@@ -180,6 +181,7 @@ export default function ReportsPage() {
                 <th className="px-4 py-2 text-left w-16">S.No</th>
                 <th className="px-4 py-2 text-left">Name</th>
                 <th className="px-4 py-2 text-left">Email</th>
+                <th className="px-4 py-2 text-left">Phone</th>
                 <th className="px-4 py-2 text-left">Subjects</th>
               </tr>
             </thead>
@@ -189,6 +191,7 @@ export default function ReportsPage() {
                   <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
                   <td className="px-4 py-2">{t.user?.name}</td>
                   <td className="px-4 py-2">{t.user?.email}</td>
+                  <td className="px-4 py-2">{t.phoneNumber || '-'}</td>
                   <td className="px-4 py-2">{(t.subjects ?? []).map((ts: any) => ts.subject?.name).join(", ")}</td>
                 </tr>
               ))}

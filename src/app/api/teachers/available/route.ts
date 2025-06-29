@@ -13,6 +13,7 @@ type TeacherWithDetails = {
   user: {
     name: string
     email: string
+    phoneNumber: string
   }
   subjects: {
     subject: {
@@ -21,6 +22,7 @@ type TeacherWithDetails = {
   }[]
   hourlyRate: number
   availabilities: TeacherAvailability[]
+  phoneNumber: string
 }
 
 // GET /api/teachers/available - Search for available teachers by subject and time slot
@@ -91,7 +93,8 @@ export async function GET(request: Request) {
         user: {
           select: {
             name: true,
-            email: true
+            email: true,
+            phoneNumber: true
           }
         },
         subjects: {
@@ -117,6 +120,7 @@ export async function GET(request: Request) {
       id: teacher.id,
       name: teacher.user.name,
       email: teacher.user.email,
+      phoneNumber: teacher.phoneNumber,
       subjects: teacher.subjects.map(s => s.subject.name),
       hourlyRate: teacher.hourlyRate,
       availability: teacher.availabilities.map((a: TeacherAvailability) => ({

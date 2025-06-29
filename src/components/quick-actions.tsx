@@ -32,6 +32,27 @@ const actions: QuickAction[] = [
     color: 'bg-blue-500',
   },
   {
+    name: 'Schedule Demo Class',
+    description: 'Schedule a demo class for a potential student',
+    href: '/demos/new',
+    icon: (props) => (
+      <svg
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="currentColor"
+        {...props}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+        />
+      </svg>
+    ),
+    color: 'bg-purple-500',
+  },
+  {
     name: 'Add New Lead',
     description: 'Create a new lead and assign to a teacher',
     href: '/leads/new',
@@ -50,7 +71,7 @@ const actions: QuickAction[] = [
         />
       </svg>
     ),
-    color: 'bg-purple-500',
+    color: 'bg-orange-500',
   },
   {
     name: 'Create Fee',
@@ -103,7 +124,7 @@ export function QuickActions() {
         <h2 className="text-lg font-medium">Quick Actions</h2>
       </div>
       <div className="p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {actions.map((action) => (
             <Link
               key={action.name}

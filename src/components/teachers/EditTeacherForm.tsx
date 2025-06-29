@@ -10,6 +10,7 @@ import { DashboardLayout } from '@/components/dashboard-layout'
 const teacherSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email'),
+  phoneNumber: z.string().optional(),
   subjects: z.string().min(1, 'At least one subject is required'),
   hourlyRate: z.string().min(1, 'Hourly rate is required'),
   bio: z.string().optional(),
@@ -47,6 +48,7 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
         const formData = {
           name: data.user.name,
           email: data.user.email,
+          phoneNumber: data.phoneNumber || '',
           subjects: data.subjects.join(', '),
           hourlyRate: data.hourlyRate.toString(),
           bio: data.bio || '',
@@ -70,6 +72,7 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
+          phoneNumber: data.phoneNumber || null,
           subjects: data.subjects.split(',').map(s => s.trim()),
           hourlyRate: parseFloat(data.hourlyRate),
         }),
@@ -146,6 +149,18 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
             {errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Phone Number (optional)
+            </label>
+            <input
+              type="tel"
+              {...register('phoneNumber')}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              placeholder="+1234567890"
+            />
           </div>
 
           <div>

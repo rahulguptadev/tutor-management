@@ -12,6 +12,7 @@ const teacherSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().optional(),
   password: z.string().optional(),
+  phoneNumber: z.string().optional(),
   hourlyRate: z.string().min(1, 'Hourly rate is required'),
   bio: z.string().optional(),
   availability: z.string().optional(),
@@ -65,6 +66,7 @@ export default function NewTeacherPage() {
           ...data,
           email: defaultEmail,
           password: 'admin123',
+          phoneNumber: data.phoneNumber || null,
           subjects: selectedSubjectIds,
           hourlyRate: parseFloat(data.hourlyRate),
           availability: data.availability ? JSON.parse(data.availability) : {},
@@ -116,6 +118,18 @@ export default function NewTeacherPage() {
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Phone Number (optional)
+            </label>
+            <input
+              type="tel"
+              {...register('phoneNumber')}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              placeholder="+1234567890"
+            />
           </div>
 
           <div>

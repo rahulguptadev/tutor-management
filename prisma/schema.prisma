@@ -58,6 +58,9 @@ enum ActivityType {
   SUBJECT_DELETED
   TEACHER_SUBJECT_ADDED
   TEACHER_SUBJECT_REMOVED
+  DEMO_CLASS_CREATED
+  DEMO_CLASS_UPDATED
+  DEMO_CLASS_CANCELLED
 }
 
 enum RecurrenceType {
@@ -88,6 +91,7 @@ model User {
   student       Student?
   lead          Lead?
   activities    Activity[]
+  demoClasses   DemoClass[]
 }
 
 model Subject {
@@ -96,6 +100,7 @@ model Subject {
   description String?
   teachers    TeacherSubject[]
   classes     Class[]
+  demoClasses DemoClass[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -112,6 +117,8 @@ model Teacher {
   payouts       Payout[]
   calendarEvents CalendarEvent[]
   availabilities TeacherAvailability[]
+  phoneNumber   String?   // Optional phone number for teacher
+  demoClasses   DemoClass[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -239,4 +246,23 @@ model TeacherAvailability {
   updatedAt     DateTime  @updatedAt
 
   @@unique([teacherId, dayOfWeek, startTime, endTime])
+}
+
+model DemoClass {
+  id            String    @id @default(cuid())
+  teacherId     String
+  teacher       Teacher   @relation(fields: [teacherId], references: [id])
+  subjectId     String
+  subject       Subject   @relation(fields: [subjectId], references: [id])
+  studentName   String
+  studentEmail  String
+  studentPhone  String?
+  scheduledDate DateTime
+  scheduledTime String    // HH:mm format
+  status        String    @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  notes         String?
+  createdBy     String
+  user          User      @relation(fields: [createdBy], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }

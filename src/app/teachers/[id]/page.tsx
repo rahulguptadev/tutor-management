@@ -10,6 +10,7 @@ type Teacher = {
   subjects: string[]
   hourlyRate: number
   bio: string | null
+  phoneNumber: string | null
   user: {
     name: string
     email: string
@@ -125,6 +126,10 @@ export default async function TeacherDetailPage({ params }: { params: Promise<{ 
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Email</dt>
                     <dd className="mt-1 text-sm text-gray-900">{teacher.user.email}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Phone</dt>
+                    <dd className="mt-1 text-sm text-gray-900">{teacher.phoneNumber || 'Not provided'}</dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Subjects</dt>

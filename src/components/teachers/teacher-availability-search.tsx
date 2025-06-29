@@ -12,6 +12,7 @@ type Teacher = {
     startTime: string
     endTime: string
   }[]
+  phoneNumber?: string
 }
 
 type TeacherAvailabilitySearchProps = {
@@ -196,6 +197,9 @@ export function TeacherAvailabilitySearch({
                   <div>
                     <h4 className="text-sm font-medium text-gray-900">{teacher.name}</h4>
                     <p className="text-sm text-gray-500">{teacher.email}</p>
+                    {teacher.phoneNumber && (
+                      <p className="text-sm text-gray-500">Phone: {teacher.phoneNumber}</p>
+                    )}
                     <p className="text-sm text-gray-500">
                       Subjects: {teacher.subjects.join(', ')}
                     </p>

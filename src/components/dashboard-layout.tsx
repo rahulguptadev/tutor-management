@@ -4,7 +4,7 @@ import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { FiMenu, FiUsers, FiUser, FiBook, FiDollarSign, FiCreditCard, FiBriefcase, FiLayers, FiHome, FiChevronDown, FiChevronUp, FiLogOut, FiSearch } from 'react-icons/fi'
+import { FiMenu, FiUsers, FiUser, FiBook, FiDollarSign, FiCreditCard, FiBriefcase, FiLayers, FiHome, FiChevronDown, FiChevronUp, FiLogOut, FiSearch, FiCalendar } from 'react-icons/fi'
 
 const navigationGroups = [
   {
@@ -23,6 +23,7 @@ const navigationGroups = [
       { name: 'Teachers', href: '/teachers', icon: FiUser },
       { name: 'Find Teachers', href: '/teachers/search', icon: FiSearch },
       { name: 'Classes', href: '/classes', icon: FiBook },
+      { name: 'Demo Classes', href: '/demos', icon: FiCalendar },
       { name: 'Subjects', href: '/subjects', icon: FiLayers },
       { name: 'Leads', href: '/leads', icon: FiBriefcase },
     ],

@@ -124,6 +124,7 @@ export default async function TeachersPage({ searchParams }: { searchParams?: Pr
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">#</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Phone</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Subjects</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Hourly Rate</th>
                   <th className="px-6 py-3"></th>
@@ -135,6 +136,7 @@ export default async function TeachersPage({ searchParams }: { searchParams?: Pr
                     <td className="px-6 py-4 whitespace-nowrap font-bold text-blue-700">{idx + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{teacher.user.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{teacher.user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{teacher.phoneNumber || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{teacher.subjects.map((ts: { subject: { name: string } }) => ts.subject.name).join(', ')}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">₹{teacher.hourlyRate}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -155,7 +157,7 @@ export default async function TeachersPage({ searchParams }: { searchParams?: Pr
                 ))}
                 {teachers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                       No teachers found.
                     </td>
                   </tr>

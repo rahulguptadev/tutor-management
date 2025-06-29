@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { name, email, password, subjects, hourlyRate, bio, availability } = body
+    const { name, email, password, phoneNumber, subjects, hourlyRate, bio, availability } = body
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       const teacher = await tx.teacher.create({
         data: {
           userId: user.id,
+          phoneNumber,
           hourlyRate,
           bio,
           availability,
