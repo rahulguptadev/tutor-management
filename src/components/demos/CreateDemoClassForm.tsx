@@ -50,11 +50,25 @@ export function CreateDemoClassForm() {
     handleSubmit,
     formState: { errors },
     watch,
+    setValue,
   } = useForm<DemoClassFormData>({
     resolver: zodResolver(demoClassSchema),
   })
 
   const watchedTeacherId = watch('teacherId')
+  const watchedSubjectId = watch('subjectId')
+
+  // Filter teachers by selected subject
+  const filteredTeachers = watchedSubjectId
+    ? teachers.filter(teacher =>
+        teacher.subjects?.some(s => s.subject.id === watchedSubjectId)
+      )
+    : teachers
+
+  // Reset teacher selection in form state when subject changes
+  useEffect(() => {
+    setValue('teacherId', '')
+  }, [watchedSubjectId, setValue])
 
   useEffect(() => {
     // Fetch teachers and subjects
@@ -173,28 +187,7 @@ export function CreateDemoClassForm() {
             />
           </div>
 
-          {/* Teacher Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Teacher *
-            </label>
-            <select
-              {...register('teacherId')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="">Select a teacher</option>
-              {teachers.map(teacher => (
-                <option key={teacher.id} value={teacher.id}>
-                  {teacher.user.name}
-                </option>
-              ))}
-            </select>
-            {errors.teacherId && (
-              <p className="mt-1 text-sm text-red-600">{errors.teacherId.message}</p>
-            )}
-          </div>
-
-          {/* Subject Selection */}
+          {/* Subject Selection - moved above Teacher Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Subject *
@@ -204,22 +197,35 @@ export function CreateDemoClassForm() {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
             >
               <option value="">Select a subject</option>
-              {selectedTeacher ? (
-                selectedTeacher.subjects.map(subject => (
-                  <option key={subject.subject.id} value={subject.subject.id}>
-                    {subject.subject.name}
-                  </option>
-                ))
-              ) : (
-                subjects.map(subject => (
-                  <option key={subject.id} value={subject.id}>
-                    {subject.name}
-                  </option>
-                ))
-              )}
+              {subjects.map(subject => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.name}
+                </option>
+              ))}
             </select>
             {errors.subjectId && (
               <p className="mt-1 text-sm text-red-600">{errors.subjectId.message}</p>
+            )}
+          </div>
+
+          {/* Teacher Selection - now filtered by subject */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Teacher *
+            </label>
+            <select
+              {...register('teacherId')}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option value="">Select a teacher</option>
+              {filteredTeachers.map(teacher => (
+                <option key={teacher.id} value={teacher.id}>
+                  {teacher.user.name}
+                </option>
+              ))}
+            </select>
+            {errors.teacherId && (
+              <p className="mt-1 text-sm text-red-600">{errors.teacherId.message}</p>
             )}
           </div>
 

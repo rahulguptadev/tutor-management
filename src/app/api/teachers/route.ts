@@ -87,6 +87,11 @@ export async function GET() {
             email: true,
           },
         },
+        subjects: {
+          include: {
+            subject: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
