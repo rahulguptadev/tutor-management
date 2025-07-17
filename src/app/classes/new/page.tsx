@@ -6,10 +6,14 @@ import { DashboardLayout } from '@/components/dashboard-layout'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import Select from 'react-select'
+import dynamic from 'next/dynamic'
+
+const StudentsSelect = dynamic(() => import('@/components/classes/StudentsSelect'), { ssr: false })
 
 const classSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  subject: z.string().min(1, 'Subject is required'),
+  subjectId: z.string().min(1, 'Subject is required'),
   teacherId: z.string().min(1, 'Teacher is required'),
   studentIds: z.array(z.string()).min(1, 'At least one student is required'),
   startDate: z.string().min(1, 'Start date is required'),
@@ -26,7 +30,7 @@ type Teacher = {
   user: {
     name: string
   }
-  subjects: string[]
+  subjects: { subject: { id: string; name: string } }[]
 }
 
 type Student = {
@@ -42,13 +46,27 @@ export default function NewClassPage() {
   const [loading, setLoading] = useState(false)
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [students, setStudents] = useState<Student[]>([])
+  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([])
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
+  const daysOfWeek = [
+    { value: 'monday', label: 'Monday' },
+    { value: 'tuesday', label: 'Tuesday' },
+    { value: 'wednesday', label: 'Wednesday' },
+    { value: 'thursday', label: 'Thursday' },
+    { value: 'friday', label: 'Friday' },
+    { value: 'saturday', label: 'Saturday' },
+    { value: 'sunday', label: 'Sunday' },
+  ]
+  const [scheduleRows, setScheduleRows] = useState([
+    { day: '', start: '', end: '' },
+  ])
 
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
+    setValue,
   } = useForm<ClassFormData>({
     resolver: zodResolver(classSchema),
     defaultValues: {
@@ -57,30 +75,33 @@ export default function NewClassPage() {
     },
   })
 
-  const watchTeacherId = watch('teacherId')
+  const watchSubjectId = watch('subjectId')
 
   useEffect(() => {
-    // Fetch teachers and students
+    // Fetch teachers, students, and subjects
     const fetchData = async () => {
       try {
-        const [teachersRes, studentsRes] = await Promise.all([
+        const [teachersRes, studentsRes, subjectsRes] = await Promise.all([
           fetch('/api/teachers'),
           fetch('/api/students'),
+          fetch('/api/subjects'),
         ])
 
-        if (!teachersRes.ok || !studentsRes.ok) {
+        if (!teachersRes.ok || !studentsRes.ok || !subjectsRes.ok) {
           throw new Error('Failed to fetch data')
         }
 
-        const [teachersData, studentsData] = await Promise.all([
+        const [teachersData, studentsData, subjectsData] = await Promise.all([
           teachersRes.json(),
           studentsRes.json(),
+          subjectsRes.json(),
         ])
 
         setTeachers(teachersData)
         setStudents(studentsData)
+        setSubjects(subjectsData)
       } catch {
-        setError('Failed to load teachers and students')
+        setError('Failed to load teachers, students, or subjects')
       }
     }
 
@@ -89,11 +110,23 @@ export default function NewClassPage() {
 
   useEffect(() => {
     // Update available subjects when teacher changes
-    if (watchTeacherId) {
-      const teacher = teachers.find(t => t.id === watchTeacherId)
+    if (watchSubjectId) {
+      const teacher = teachers.find(t => t.id === watchSubjectId)
       setSelectedTeacher(teacher || null)
     }
-  }, [watchTeacherId, teachers])
+  }, [watchSubjectId, teachers])
+
+  // Helper to update schedule in react-hook-form when scheduleRows change
+  useEffect(() => {
+    // Build schedule object
+    const scheduleObj: Record<string, string> = {}
+    scheduleRows.forEach(row => {
+      if (row.day && row.start && row.end) {
+        scheduleObj[row.day] = `${row.start}-${row.end}`
+      }
+    })
+    setValue('schedule', JSON.stringify(scheduleObj), { shouldValidate: true })
+  }, [scheduleRows, setValue])
 
   async function onSubmit(data: ClassFormData) {
     setError('')
@@ -107,6 +140,8 @@ export default function NewClassPage() {
           ...data,
           fee: parseFloat(data.fee),
           schedule: JSON.parse(data.schedule),
+          startTime: new Date(data.startDate).toISOString(),
+          endTime: new Date(data.endDate).toISOString(),
         }),
       })
 
@@ -122,6 +157,16 @@ export default function NewClassPage() {
       setLoading(false)
     }
   }
+
+  // Filter teachers by selected subject
+  const filteredTeachers = watchSubjectId
+    ? teachers.filter(teacher =>
+        teacher.subjects.some(s => s.subject.id === watchSubjectId)
+      )
+    : teachers
+
+  // Add this helper to map students to react-select options
+  const studentOptions = students.map(student => ({ value: student.id, label: student.user.name }))
 
   return (
     <DashboardLayout>
@@ -161,21 +206,19 @@ export default function NewClassPage() {
             <label className="block text-sm font-medium text-gray-700">
               Subject
             </label>
-            <input
-              type="text"
-              {...register('subject')}
+            <select
+              {...register('subjectId')}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              list="subject-list"
-            />
-            {selectedTeacher && (
-              <datalist id="subject-list">
-                {selectedTeacher.subjects.map(subject => (
-                  <option key={subject} value={subject} />
-                ))}
-              </datalist>
-            )}
-            {errors.subject && (
-              <p className="mt-1 text-sm text-red-600">{errors.subject.message}</p>
+            >
+              <option value="">Select a subject</option>
+              {subjects.map(subject => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.name}
+                </option>
+              ))}
+            </select>
+            {errors.subjectId && (
+              <p className="mt-1 text-sm text-red-600">{errors.subjectId.message}</p>
             )}
           </div>
 
@@ -188,9 +231,9 @@ export default function NewClassPage() {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
             >
               <option value="">Select a teacher</option>
-              {teachers.map(teacher => (
+              {filteredTeachers.map(teacher => (
                 <option key={teacher.id} value={teacher.id}>
-                  {teacher.user.name} ({(teacher.subjects ?? []).join(', ')})
+                  {teacher.user.name} ({teacher.subjects.map(s => s.subject.name).join(', ')})
                 </option>
               ))}
             </select>
@@ -203,31 +246,24 @@ export default function NewClassPage() {
             <label className="block text-sm font-medium text-gray-700">
               Students
             </label>
-            <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
-              {students.map(student => (
-                <label key={student.id} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value={student.id}
-                    {...register('studentIds')}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2">{student.user.name}</span>
-                </label>
-              ))}
-            </div>
-            {errors.studentIds && (
-              <p className="mt-1 text-sm text-red-600">{errors.studentIds.message}</p>
-            )}
+            <StudentsSelect
+              options={studentOptions}
+              value={studentOptions.filter(option => watch('studentIds').includes(option.value))}
+              onChange={selected => {
+                const ids = selected ? selected.map((s: any) => s.value) : []
+                setValue('studentIds', ids, { shouldValidate: true })
+              }}
+              errors={errors.studentIds}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Start Date
+                Start Date & Time
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 {...register('startDate')}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
               />
@@ -235,13 +271,12 @@ export default function NewClassPage() {
                 <p className="mt-1 text-sm text-red-600">{errors.startDate.message}</p>
               )}
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                End Date
+                End Date & Time
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 {...register('endDate')}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
               />
@@ -253,17 +288,64 @@ export default function NewClassPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Schedule (JSON)
+              Schedule
             </label>
-            <textarea
-              {...register('schedule')}
-              placeholder='{"monday": "10:00-11:00", "wednesday": "10:00-11:00"}'
-              rows={3}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              Enter schedule as JSON. Example: {'{"monday": "10:00-11:00", "wednesday": "10:00-11:00"}'}
-            </p>
+            <div className="space-y-2">
+              {scheduleRows.map((row, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <select
+                    className="border rounded px-2 py-1"
+                    value={row.day}
+                    onChange={e => {
+                      const newRows = [...scheduleRows]
+                      newRows[idx].day = e.target.value
+                      setScheduleRows(newRows)
+                    }}
+                  >
+                    <option value="">Day</option>
+                    {daysOfWeek.map(day => (
+                      <option key={day.value} value={day.value}>{day.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="time"
+                    className="border rounded px-2 py-1"
+                    value={row.start}
+                    onChange={e => {
+                      const newRows = [...scheduleRows]
+                      newRows[idx].start = e.target.value
+                      setScheduleRows(newRows)
+                    }}
+                  />
+                  <span>-</span>
+                  <input
+                    type="time"
+                    className="border rounded px-2 py-1"
+                    value={row.end}
+                    onChange={e => {
+                      const newRows = [...scheduleRows]
+                      newRows[idx].end = e.target.value
+                      setScheduleRows(newRows)
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="text-red-500 px-2"
+                    onClick={() => setScheduleRows(scheduleRows.filter((_, i) => i !== idx))}
+                    disabled={scheduleRows.length === 1}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="text-blue-600 underline text-sm"
+                onClick={() => setScheduleRows([...scheduleRows, { day: '', start: '', end: '' }])}
+              >
+                + Add Row
+              </button>
+            </div>
             {errors.schedule && (
               <p className="mt-1 text-sm text-red-600">{errors.schedule.message}</p>
             )}

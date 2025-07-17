@@ -44,15 +44,18 @@ export default async function ClassesPage() {
           },
         },
       },
-      student: {
+      students: {
         include: {
-          user: {
-            select: {
-              name: true,
+          student: {
+            include: {
+              user: {
+                select: { name: true },
+              },
             },
           },
         },
       },
+      subject: true,
     },
     orderBy: {
       startTime: 'desc',
@@ -107,9 +110,15 @@ export default async function ClassesPage() {
                   <tr key={classItem.id} className="hover:bg-blue-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap font-bold text-blue-700">{idx + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{classItem.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{classItem.subject}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                      {classItem.subject?.name || '-'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{classItem.teacher.user.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{classItem.student?.user?.name || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                      {classItem.students && classItem.students.length > 0
+                        ? classItem.students.map((cs: any) => cs.student.user.name).join(', ')
+                        : '-'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{new Date(classItem.startTime).toLocaleDateString()} - {new Date(classItem.endTime).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(classItem.status)}`}>

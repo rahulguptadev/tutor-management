@@ -95,11 +95,12 @@ export async function GET(request: Request) {
           'Name': teacher.user.name,
           'Email': teacher.user.email,
           'Subjects': teacher.subjects.map(ts => ts.subject.name).join(', '),
-          'Hourly Rate': teacher.hourlyRate,
+          'Education': teacher.education,
+          'Qualification': teacher.qualification,
           'Created At': teacher.createdAt.toLocaleDateString(),
         }))
 
-        headers = ['Teacher ID', 'Name', 'Email', 'Subjects', 'Hourly Rate', 'Created At']
+        headers = ['Teacher ID', 'Name', 'Email', 'Subjects', 'Education', 'Qualification', 'Created At']
         break
       }
 

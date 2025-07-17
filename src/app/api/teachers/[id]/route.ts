@@ -58,8 +58,9 @@ export async function PUT(
     const email = body.email as string;
     const phoneNumber = body.phoneNumber as string;
     const subjects = body.subjects;
-    const hourlyRate = body.hourlyRate;
     const bio = body.bio;
+    const education = body.education;
+    const qualification = body.qualification;
 
     // Get the teacher to find the associated user
     const teacher = await prisma.teacher.findUnique({
@@ -88,8 +89,9 @@ export async function PUT(
         data: {
           phoneNumber,
           subjects,
-          hourlyRate,
           bio,
+          education,
+          qualification,
         },
         include: {
           user: {

@@ -95,7 +95,8 @@ async function main() {
     data: {
       userId: teacherUser1.id,
       bio: 'Experienced math and physics teacher.',
-      hourlyRate: 50,
+      education: 'M.Sc. Mathematics',
+      qualification: 'B.Ed.',
       availability: JSON.stringify({
         Monday: [{ start: '09:00', end: '17:00' }],
         Tuesday: [{ start: '09:00', end: '17:00' }],
@@ -130,7 +131,8 @@ async function main() {
     data: {
       userId: teacherUser2.id,
       bio: 'English literature specialist.',
-      hourlyRate: 45,
+      education: 'M.A. English',
+      qualification: 'NET Qualified',
       availability: JSON.stringify({
         Wednesday: [{ start: '10:00', end: '18:00' }],
         Thursday: [{ start: '10:00', end: '18:00' }],
@@ -191,24 +193,28 @@ async function main() {
   const class1 = await prisma.class.create({
     data: {
       teacherId: teacher1.id,
-      studentId: student1.id,
       subjectId: mathematics.id,
       startTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0),
       endTime: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11, 0),
       status: 'SCHEDULED',
-      isRecurring: false,
     },
   })
   const class2 = await prisma.class.create({
     data: {
       teacherId: teacher2.id,
-      studentId: student2.id,
       subjectId: english.id,
       startTime: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 14, 0),
       endTime: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 15, 0),
       status: 'SCHEDULED',
-      isRecurring: false,
     },
+  })
+  // Link students to classes (multi-student support)
+  await prisma.classStudent.createMany({
+    data: [
+      { classId: class1.id, studentId: student1.id },
+      { classId: class1.id, studentId: student2.id }, // class1 has two students
+      { classId: class2.id, studentId: student2.id },
+    ],
   })
 
   // Create fees

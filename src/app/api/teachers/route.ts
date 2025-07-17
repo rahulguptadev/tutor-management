@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { name, email, password, phoneNumber, subjects, hourlyRate, bio, availability } = body
+    const { name, email, password, phoneNumber, subjects, bio, availability, education, qualification } = body
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -41,9 +41,10 @@ export async function POST(req: Request) {
         data: {
           userId: user.id,
           phoneNumber,
-          hourlyRate,
           bio,
           availability,
+          education,
+          qualification,
         },
       })
 
@@ -103,4 +104,6 @@ export async function GET() {
     console.error('Error fetching teachers:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
-} 
+}
+
+// After migration, run npx prisma generate to update the Prisma client types

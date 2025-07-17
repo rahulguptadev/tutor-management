@@ -23,7 +23,7 @@ export async function POST(
     await prisma.student.update({
       where: { id },
       data: {
-        gradeId: gradeId || null,
+        grade: gradeId ? { connect: { id: gradeId } } : { disconnect: true },
         school,
         mobileNumber,
         fatherName,

@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const {
       subjectId,
       teacherId,
-      studentId,
+      studentIds, // now an array
       startTime,
       endTime,
       status,
@@ -32,7 +32,6 @@ export async function POST(req: Request) {
         data: {
           subjectId,
           teacherId,
-          studentId,
           startTime: new Date(startTime),
           endTime: new Date(endTime),
           status,
@@ -41,44 +40,47 @@ export async function POST(req: Request) {
           recurrence,
           recurrenceEnd: recurrenceEnd ? new Date(recurrenceEnd) : undefined,
         },
-        include: {
-          teacher: {
-            include: {
-              user: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-          student: {
-            include: {
-              user: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-          subject: {
-            select: {
-              name: true,
-            },
-          },
-        },
       })
 
-      // Log the activity
-      await logActivity(
-        'CLASS_CREATED',
-        `New class (${classItem.subject.name}) created for ${classItem.student.user.name} with teacher ${classItem.teacher.user.name}`,
-        session.user.id
-      )
+      // Create ClassStudent records
+      if (Array.isArray(studentIds)) {
+        await Promise.all(
+          studentIds.map((studentId: string) =>
+            tx.classStudent.create({
+              data: {
+                classId: classItem.id,
+                studentId,
+              },
+            })
+          )
+        )
+      }
 
       return classItem
     })
 
-    return NextResponse.json(result)
+    // Fetch class with all students outside the transaction
+    const classWithStudents = await prisma.class.findUnique({
+      where: { id: result.id },
+      include: {
+        teacher: { include: { user: { select: { name: true } } } },
+        subject: { select: { name: true } },
+        students: {
+          include: {
+            student: { include: { user: { select: { name: true } } } },
+          },
+        },
+      },
+    })
+
+    // Log the activity
+    await logActivity(
+      'CLASS_CREATED',
+      `New class (${classWithStudents?.subject.name}) created with teacher ${classWithStudents?.teacher.user.name} for students: ` + (studentIds || []).join(', '),
+      session.user.id
+    )
+
+    return NextResponse.json(classWithStudents)
   } catch (error) {
     console.error('Error creating class:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
@@ -104,11 +106,15 @@ export async function GET() {
             },
           },
         },
-        student: {
+        students: {
           include: {
-            user: {
-              select: {
-                name: true,
+            student: {
+              include: {
+                user: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -153,11 +159,15 @@ export async function PATCH(request: Request) {
             },
           },
         },
-        student: {
+        students: {
           include: {
-            user: {
-              select: {
-                name: true,
+            student: {
+              include: {
+                user: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -186,11 +196,15 @@ export async function PATCH(request: Request) {
             },
           },
         },
-        student: {
+        students: {
           include: {
-            user: {
-              select: {
-                name: true,
+            student: {
+              include: {
+                user: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -206,7 +220,7 @@ export async function PATCH(request: Request) {
     // Log the activity
     await logActivity(
       'CLASS_UPDATED',
-      `Class (${updatedClass.subject.name}) updated for ${updatedClass.student.user.name} with teacher ${updatedClass.teacher.user.name}`,
+      `Class (${updatedClass.subject.name}) updated for ${updatedClass.students[0]?.student.user.name} with teacher ${updatedClass.teacher.user.name}`,
       session.user.id
     )
 

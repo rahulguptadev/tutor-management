@@ -11,8 +11,9 @@ const teacherSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email'),
   phoneNumber: z.string().optional(),
+  education: z.string().optional(),
+  qualification: z.string().optional(),
   subjects: z.string().min(1, 'At least one subject is required'),
-  hourlyRate: z.string().min(1, 'Hourly rate is required'),
   bio: z.string().optional(),
 })
 
@@ -49,8 +50,9 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
           name: data.user.name,
           email: data.user.email,
           phoneNumber: data.phoneNumber || '',
+          education: data.education || '',
+          qualification: data.qualification || '',
           subjects: data.subjects.join(', '),
-          hourlyRate: data.hourlyRate.toString(),
           bio: data.bio || '',
         }
         setInitialData(formData)
@@ -74,7 +76,6 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
           ...data,
           phoneNumber: data.phoneNumber || null,
           subjects: data.subjects.split(',').map(s => s.trim()),
-          hourlyRate: parseFloat(data.hourlyRate),
         }),
       })
 
@@ -165,6 +166,28 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
+              Education
+            </label>
+            <input
+              type="text"
+              {...register('education')}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Qualification
+            </label>
+            <input
+              type="text"
+              {...register('qualification')}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
               Subjects (comma-separated)
             </label>
             <input
@@ -175,21 +198,6 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
             />
             {errors.subjects && (
               <p className="mt-1 text-sm text-red-600">{errors.subjects.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Hourly Rate (₹)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              {...register('hourlyRate')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            />
-            {errors.hourlyRate && (
-              <p className="mt-1 text-sm text-red-600">{errors.hourlyRate.message}</p>
             )}
           </div>
 

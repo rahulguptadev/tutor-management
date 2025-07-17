@@ -91,11 +91,11 @@ export default async function DashboardPage() {
             },
           },
         },
-        student: {
-          select: {
-            user: {
-              select: {
-                name: true,
+        students: {
+          include: {
+            student: {
+              include: {
+                user: { select: { name: true } },
               },
             },
           },
@@ -304,7 +304,7 @@ export default async function DashboardPage() {
                         Teacher: {class_.teacher.user.name}
                       </p>
                       <p className="mt-1 text-sm text-gray-500">
-                        Student: {class_.student?.user?.name}
+                        Students: {class_.students.map(cs => cs.student.user.name).join(', ')}
                       </p>
                     </div>
                     <div className="text-right">

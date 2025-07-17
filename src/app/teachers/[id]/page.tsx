@@ -135,10 +135,6 @@ export default async function TeacherDetailPage({ params }: { params: Promise<{ 
                     <dt className="text-sm font-medium text-gray-500">Subjects</dt>
                     <dd className="mt-1 text-sm text-gray-900">{teacher.subjects.map(ts => ts.subject.name).join(', ')}</dd>
                   </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Hourly Rate</dt>
-                    <dd className="mt-1 text-sm text-gray-900">${teacher.hourlyRate}/hr</dd>
-                  </div>
                   {teacher.bio && (
                     <div>
                       <dt className="text-sm font-medium text-gray-500">Bio</dt>

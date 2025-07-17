@@ -113,7 +113,8 @@ model Teacher {
   user          User      @relation(fields: [userId], references: [id])
   subjects      TeacherSubject[]
   bio           String?
-  hourlyRate    Float
+  education     String?   // New field for education
+  qualification String?   // New field for qualification
   availability  Json      // Store availability as JSON
   classes       Class[]
   payouts       Payout[]
@@ -150,7 +151,7 @@ model Student {
   motherName    String?
   motherContact String?
   enrolledSubjects Subject[] @relation("StudentEnrolledSubjects")
-  classes       Class[]
+  classes       ClassStudent[]
   fees          Fee[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -172,10 +173,9 @@ model Class {
   id            String    @id @default(cuid())
   teacherId     String
   teacher       Teacher   @relation(fields: [teacherId], references: [id])
-  studentId     String
-  student       Student   @relation(fields: [studentId], references: [id])
   subjectId     String
   subject       Subject   @relation(fields: [subjectId], references: [id])
+  students      ClassStudent[]
   startTime     DateTime
   endTime       DateTime
   status        String    // SCHEDULED, COMPLETED, CANCELLED
@@ -302,4 +302,16 @@ model GradeSubject {
   updatedAt DateTime @updatedAt
 
   @@unique([gradeId, subjectId])
+}
+
+model ClassStudent {
+  id        String   @id @default(cuid())
+  classId   String
+  studentId String
+  class     Class    @relation(fields: [classId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([classId, studentId])
 }

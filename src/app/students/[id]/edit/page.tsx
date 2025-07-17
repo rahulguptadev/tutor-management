@@ -28,11 +28,7 @@ export default async function EditStudentPage({ params }: EditStudentPageProps) 
           curriculum: true,
         },
       },
-      enrolledSubjects: {
-        include: {
-          subject: true,
-        },
-      },
+      enrolledSubjects: true,
     },
   })
 
@@ -197,7 +193,7 @@ export default async function EditStudentPage({ params }: EditStudentPageProps) 
             <h3 className="text-lg font-medium text-gray-900 mb-4">Enrolled Subjects</h3>
             <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
               {allSubjects.map(subject => {
-                const isEnrolled = student.enrolledSubjects.some(es => es.subject.id === subject.id)
+                const isEnrolled = student.enrolledSubjects.some(es => es.id === subject.id)
                 return (
                   <label key={subject.id} className="flex items-center">
                     <input

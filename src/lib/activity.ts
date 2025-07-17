@@ -7,6 +7,9 @@ export async function logActivity(
   userId: string
 ) {
   try {
+    // Optionally, check if userId exists
+    // const user = await prisma.user.findUnique({ where: { id: userId } })
+    // if (!user) return
     await prisma.activity.create({
       data: {
         type,
@@ -15,7 +18,6 @@ export async function logActivity(
       },
     })
   } catch (error) {
-    console.error('Failed to log activity:', error)
-    // Don't throw the error to prevent disrupting the main operation
+    console.warn('Failed to log activity:', error)
   }
 } 

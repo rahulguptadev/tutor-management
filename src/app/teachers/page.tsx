@@ -126,7 +126,8 @@ export default async function TeachersPage({ searchParams }: { searchParams?: Pr
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Phone</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Subjects</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Hourly Rate</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Education</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Qualification</th>
                   <th className="px-6 py-3"></th>
                 </tr>
               </thead>
@@ -138,7 +139,8 @@ export default async function TeachersPage({ searchParams }: { searchParams?: Pr
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{teacher.user.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{teacher.phoneNumber || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">{teacher.subjects.map((ts: { subject: { name: string } }) => ts.subject.name).join(', ')}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">₹{teacher.hourlyRate}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{teacher.education || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{teacher.qualification || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <Link
                         href={`/teachers/${teacher.id}`}
