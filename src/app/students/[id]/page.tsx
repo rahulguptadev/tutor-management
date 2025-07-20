@@ -3,33 +3,20 @@ import { notFound } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import Link from 'next/link';
 
-export default async function StudentDetailPage({ params }: any) {
+export default async function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const student = await prisma.student.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
-      user: {
-        select: {
-          name: true,
-          email: true,
-        },
-      },
-      grade: {
-        select: {
-          name: true,
-          curriculum: true,
-          level: true,
-        },
-      },
-      enrolledSubjects: {
-        select: {
-          name: true,
-        },
-      },
+      user: { select: { name: true, email: true } },
+      grade: { select: { name: true, curriculum: true, level: true } },
+      enrolledSubjects: { select: { name: true } },
       classes: {
         include: {
-          teacher: {
+          class: {
             include: {
-              user: { select: { name: true } },
+              teacher: { include: { user: { select: { name: true } } } },
+              subject: true,
             },
           },
         },
@@ -79,13 +66,13 @@ export default async function StudentDetailPage({ params }: any) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {student.classes.map((cls: any) => (
-                <tr key={cls.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">{cls.subject}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{cls.teacher?.user?.name || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{cls.status}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{new Date(cls.startTime).toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{new Date(cls.endTime).toLocaleString()}</td>
+              {student.classes.map((classItem: any) => (
+                <tr key={classItem.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">{classItem.class.subject.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{classItem.class.teacher.user.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{classItem.status}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{new Date(classItem.startTime).toLocaleString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{new Date(classItem.endTime).toLocaleString()}</td>
                 </tr>
               ))}
               {student.classes.length === 0 && (

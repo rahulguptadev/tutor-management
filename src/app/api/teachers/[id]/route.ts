@@ -21,12 +21,8 @@ export async function GET(
     const teacher = await prisma.teacher.findUnique({
       where: { id: id },
       include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
+        user: { select: { name: true, email: true } },
+        subjects: { include: { subject: { select: { name: true } } } },
       },
     })
 
@@ -34,7 +30,13 @@ export async function GET(
       return new NextResponse('Teacher not found', { status: 404 })
     }
 
-    return NextResponse.json(teacher)
+    // Flatten subjects to array of names
+    const teacherData = {
+      ...teacher,
+      subjects: teacher.subjects.map((s: any) => s.subject.name),
+    }
+
+    return NextResponse.json(teacherData)
   } catch (error) {
     console.error('Error fetching teacher:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
@@ -57,7 +59,7 @@ export async function PUT(
     const name = body.name as string;
     const email = body.email as string;
     const phoneNumber = body.phoneNumber as string;
-    const subjects = body.subjects;
+    const subjects = body.subjects; // array of subject names
     const bio = body.bio;
     const education = body.education;
     const qualification = body.qualification;
@@ -72,15 +74,19 @@ export async function PUT(
       return new NextResponse('Teacher not found', { status: 404 })
     }
 
+    // Look up subject IDs from names
+    const subjectRecords = await prisma.subject.findMany({
+      where: { name: { in: subjects } },
+      select: { id: true },
+    })
+    const subjectIds = subjectRecords.map(s => s.id)
+
     // Update both user and teacher details in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Update user details
       const updatedUser = await tx.user.update({
         where: { id: teacher.userId },
-        data: {
-          name,
-          email,
-        },
+        data: { name, email },
       })
 
       // Update teacher details
@@ -88,18 +94,15 @@ export async function PUT(
         where: { id: id },
         data: {
           phoneNumber,
-          subjects,
           bio,
           education,
           qualification,
+          subjects: {
+            set: subjectIds.map(subjectId => ({ teacherId_subjectId: { teacherId: id, subjectId } })),
+          },
         },
         include: {
-          user: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
+          user: { select: { name: true, email: true } },
         },
       })
 

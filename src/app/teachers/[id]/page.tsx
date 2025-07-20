@@ -57,18 +57,15 @@ export default async function TeacherDetailPage({ params }: { params: Promise<{ 
     include: {
       user: { select: { name: true, email: true } },
       availabilities: true,
-      subjects: {
-        include: {
-          subject: true
-        }
-      },
+      subjects: { include: { subject: true } },
       classes: {
         include: {
-          student: {
+          students: {
             include: {
-              user: { select: { name: true } },
+              student: { include: { user: { select: { name: true } } } },
             },
           },
+          subject: true,
         },
       },
       payouts: true,
@@ -186,8 +183,8 @@ export default async function TeacherDetailPage({ params }: { params: Promise<{ 
               <tbody className="bg-white divide-y divide-gray-200">
                 {teacher.classes.map((cls: any) => (
                   <tr key={cls.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{cls.subject}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{cls.student?.user?.name || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{cls.subject?.name || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{cls.students.map(cs => cs.student.user.name).join(', ')}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{cls.status}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(cls.startTime).toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(cls.endTime).toLocaleString()}</td>
