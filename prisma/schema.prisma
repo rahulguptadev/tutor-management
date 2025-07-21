@@ -95,16 +95,16 @@ model User {
 }
 
 model Subject {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  description String?
-  teachers    TeacherSubject[]
-  classes     Class[]
-  demoClasses DemoClass[]
-  enrolledStudents Student[] @relation("StudentEnrolledSubjects")
-  grades      GradeSubject[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  name          String    @unique
+  description   String?
+  teachers      TeacherSubject[]
+  classes       Class[]
+  demoClasses   DemoClass[]
+  enrolledStudents StudentEnrolledSubject[]
+  grades        GradeSubject[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Teacher {
@@ -150,7 +150,7 @@ model Student {
   fatherContact String?
   motherName    String?
   motherContact String?
-  enrolledSubjects Subject[] @relation("StudentEnrolledSubjects")
+  enrolledSubjects StudentEnrolledSubject[]
   classes       ClassStudent[]
   fees          Fee[]
   createdAt     DateTime  @default(now())
@@ -314,4 +314,16 @@ model ClassStudent {
   updatedAt DateTime @updatedAt
 
   @@unique([classId, studentId])
+}
+
+model StudentEnrolledSubject {
+  id         String   @id @default(cuid())
+  studentId  String
+  subjectId  String
+  sessions   Int
+  fee        Float
+  student    Student  @relation(fields: [studentId], references: [id])
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, subjectId])
 }

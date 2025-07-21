@@ -17,7 +17,9 @@ export async function POST(
     const fatherContact = formData.get('fatherContact') as string;
     const motherName = formData.get('motherName') as string;
     const motherContact = formData.get('motherContact') as string;
-    const enrolledSubjectIds = formData.getAll('enrolledSubjectIds') as string[];
+    // Parse enrolledSubjects from formData (assume it's sent as JSON string)
+    const enrolledSubjectsRaw = formData.get('enrolledSubjects') as string;
+    const enrolledSubjects = enrolledSubjectsRaw ? JSON.parse(enrolledSubjectsRaw) : [];
 
     // Update user and student
     await prisma.student.update({
@@ -30,8 +32,14 @@ export async function POST(
         fatherContact,
         motherName,
         motherContact,
+        // Remove all previous enrolledSubjects and add new ones
         enrolledSubjects: {
-          set: enrolledSubjectIds.map((subjectId) => ({ id: subjectId })),
+          deleteMany: {},
+          create: enrolledSubjects.map((row: any) => ({
+            subject: { connect: { id: row.subjectId } },
+            sessions: Number(row.sessions),
+            fee: Number(row.fee),
+          })),
         },
         user: {
           update: {

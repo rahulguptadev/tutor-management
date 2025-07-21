@@ -26,7 +26,9 @@ type StudentRow = {
     email: string;
   };
   enrolledSubjects: {
-    name: string;
+    subject: {
+      name: string;
+    } | null;
   }[];
 };
 
@@ -99,9 +101,11 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
           },
         },
         enrolledSubjects: {
-          select: {
-            name: true,
-          },
+          include: {
+            subject: {
+              select: { name: true }
+            }
+          }
         },
       },
       orderBy: { [sort]: order },
@@ -183,12 +187,12 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                     <td className="px-6 py-4 text-gray-700">
                       {student.enrolledSubjects.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {student.enrolledSubjects.map((subject, index) => (
+                          {student.enrolledSubjects.map((enrolledSubject, index) => (
                             <span
-                              key={subject.name}
+                              key={enrolledSubject.subject?.name ?? index}
                               className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
                             >
-                              {subject.name}
+                              {enrolledSubject.subject?.name ?? 'Unknown'}
                             </span>
                           ))}
                         </div>

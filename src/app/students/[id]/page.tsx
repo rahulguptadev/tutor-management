@@ -10,7 +10,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
     include: {
       user: { select: { name: true, email: true } },
       grade: { select: { name: true, curriculum: true, level: true } },
-      enrolledSubjects: { select: { name: true } },
+      enrolledSubjects: { include: { subject: { select: { name: true } } } },
       classes: {
         include: {
           class: {
@@ -40,17 +40,49 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           Edit
         </Link>
       </div>
-      <div className="bg-white rounded shadow p-6 mb-6">
-        <p><strong>Name:</strong> {student.user.name}</p>
-        <p><strong>Email:</strong> {student.user.email}</p>
-        <p><strong>Grade:</strong> {student.grade ? `${student.grade.name} (${student.grade.curriculum})` : '-'}</p>
-        <p><strong>School:</strong> {student.school || '-'}</p>
-        <p><strong>Mobile Number:</strong> {student.mobileNumber || '-'}</p>
-        <p><strong>Father's Name:</strong> {student.fatherName || '-'}</p>
-        <p><strong>Father's Contact:</strong> {student.fatherContact || '-'}</p>
-        <p><strong>Mother's Name:</strong> {student.motherName || '-'}</p>
-        <p><strong>Mother's Contact:</strong> {student.motherContact || '-'}</p>
-        <p><strong>Enrolled Subjects:</strong> {student.enrolledSubjects.length > 0 ? student.enrolledSubjects.map((s: any) => s.name).join(', ') : '-'}</p>
+      <div className="bg-white rounded-xl shadow p-8 mb-8 border border-gray-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <p className="mb-2"><span className="font-semibold text-gray-700">Name:</span> {student.user.name}</p>
+            <p className="mb-2"><span className="font-semibold text-gray-700">Email:</span> {student.user.email}</p>
+            <p className="mb-2"><span className="font-semibold text-gray-700">Grade:</span> {student.grade ? `${student.grade.name} (${student.grade.curriculum})` : '-'}</p>
+            <p className="mb-2"><span className="font-semibold text-gray-700">School:</span> {student.school || '-'}</p>
+            <p className="mb-2"><span className="font-semibold text-gray-700">Mobile Number:</span> {student.mobileNumber || '-'}</p>
+          </div>
+          <div>
+            <p className="mb-2"><span className="font-semibold text-gray-700">Father's Name:</span> {student.fatherName || '-'}</p>
+            <p className="mb-2"><span className="font-semibold text-gray-700">Father's Contact:</span> {student.fatherContact || '-'}</p>
+            <p className="mb-2"><span className="font-semibold text-gray-700">Mother's Name:</span> {student.motherName || '-'}</p>
+            <p className="mb-2"><span className="font-semibold text-gray-700">Mother's Contact:</span> {student.motherContact || '-'}</p>
+          </div>
+        </div>
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-2">Enrolled Subjects</h3>
+          {student.enrolledSubjects.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 bg-gray-50 rounded">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sessions</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Fee</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {student.enrolledSubjects.map((es: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="px-4 py-2 whitespace-nowrap">{es.subject?.name ?? 'Unknown'}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{es.sessions ?? '-'}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{es.fee !== undefined ? `₹${es.fee}` : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500">-</p>
+          )}
+        </div>
       </div>
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Classes</h2>

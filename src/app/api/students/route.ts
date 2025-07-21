@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       fatherContact, 
       motherName, 
       motherContact, 
-      enrolledSubjectIds 
+      enrolledSubjects = []
     } = body
 
     // Check if user already exists
@@ -60,7 +60,11 @@ export async function POST(req: Request) {
           motherName,
           motherContact,
           enrolledSubjects: {
-            connect: enrolledSubjectIds?.map((subjectId: string) => ({ id: subjectId })) || []
+            create: enrolledSubjects.map((row: any) => ({
+              subject: { connect: { id: row.subjectId } },
+              sessions: Number(row.sessions),
+              fee: Number(row.fee),
+            }))
           }
         },
       })

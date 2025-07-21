@@ -18,7 +18,11 @@ const studentSchema = z.object({
   fatherContact: z.string().optional(),
   motherName: z.string().optional(),
   motherContact: z.string().optional(),
-  enrolledSubjectIds: z.array(z.string()).optional(),
+  enrolledSubjects: z.array(z.object({
+    subjectId: z.string().optional(),
+    sessions: z.string().optional(),
+    fee: z.string().optional(),
+  })).optional(),
 })
 
 type StudentFormData = z.infer<typeof studentSchema>
@@ -42,7 +46,9 @@ export default function NewStudentPage() {
   const [loading, setLoading] = useState(false)
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [grades, setGrades] = useState<Grade[]>([])
-  const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([])
+  const [enrolledSubjects, setEnrolledSubjects] = useState([
+    { subjectId: '', sessions: '', fee: '' }
+  ])
   const [selectedGradeId, setSelectedGradeId] = useState<string>('')
 
   // Fetch subjects and grades on mount
@@ -85,7 +91,7 @@ export default function NewStudentPage() {
           email: defaultEmail,
           password: 'admin123',
           gradeId: selectedGradeId || null,
-          enrolledSubjectIds: selectedSubjectIds,
+          enrolledSubjects: enrolledSubjects.filter(row => row.subjectId && row.sessions && row.fee),
         }),
       })
 
@@ -102,12 +108,16 @@ export default function NewStudentPage() {
     }
   }
 
-  const handleSubjectToggle = (subjectId: string) => {
-    setSelectedSubjectIds(prev => 
-      prev.includes(subjectId) 
-        ? prev.filter(id => id !== subjectId)
-        : [...prev, subjectId]
-    )
+  const handleEnrolledSubjectChange = (idx: number, field: string, value: string) => {
+    setEnrolledSubjects(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row))
+  }
+
+  const handleAddRow = () => {
+    setEnrolledSubjects(prev => [...prev, { subjectId: '', sessions: '', fee: '' }])
+  }
+
+  const handleRemoveRow = (idx: number) => {
+    setEnrolledSubjects(prev => prev.filter((_, i) => i !== idx))
   }
 
   return (
@@ -250,24 +260,45 @@ export default function NewStudentPage() {
             </div>
           </div>
 
-          {/* Enrolled Subjects */}
+          {/* Enrolled Subjects with Sessions and Fee */}
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">Enrolled Subjects</h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
-              {subjects.map(subject => (
-                <label key={subject.id} className="flex items-center">
+            <div className="space-y-2 border border-gray-200 rounded-md p-3">
+              {enrolledSubjects.map((row, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <select
+                    className="rounded border-gray-300 px-2 py-1"
+                    value={row.subjectId}
+                    onChange={e => handleEnrolledSubjectChange(idx, 'subjectId', e.target.value)}
+                  >
+                    <option value="">Select subject</option>
+                    {subjects.map(subject => (
+                      <option key={subject.id} value={subject.id}>{subject.name}</option>
+                    ))}
+                  </select>
                   <input
-                    type="checkbox"
-                    checked={selectedSubjectIds.includes(subject.id)}
-                    onChange={() => handleSubjectToggle(subject.id)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    type="number"
+                    min="1"
+                    placeholder="Sessions"
+                    className="rounded border-gray-300 px-2 py-1 w-24"
+                    value={row.sessions}
+                    onChange={e => handleEnrolledSubjectChange(idx, 'sessions', e.target.value)}
                   />
-                  <span className="ml-2 text-sm">{subject.name}</span>
-                </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Fee"
+                    className="rounded border-gray-300 px-2 py-1 w-24"
+                    value={row.fee}
+                    onChange={e => handleEnrolledSubjectChange(idx, 'fee', e.target.value)}
+                  />
+                  {enrolledSubjects.length > 1 && (
+                    <button type="button" onClick={() => handleRemoveRow(idx)} className="text-red-500 px-2">Remove</button>
+                  )}
+                </div>
               ))}
-              {subjects.length === 0 && (
-                <p className="text-sm text-gray-500">No subjects available</p>
-              )}
+              <button type="button" onClick={handleAddRow} className="mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded">Add More</button>
             </div>
           </div>
 
