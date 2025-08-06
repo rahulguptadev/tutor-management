@@ -18,10 +18,10 @@ export default async function DemosPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto py-6">
+      <div className="p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold">Demo Classes</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-gray-900">Demo Classes</h1>
+          <p className="text-sm text-gray-600 mt-1">
             Manage and track demo class schedules
           </p>
         </div>

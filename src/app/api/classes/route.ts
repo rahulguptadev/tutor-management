@@ -96,6 +96,7 @@ export async function GET() {
     }
 
     const classes = await prisma.class.findMany({
+      where: { isActive: true },
       include: {
         teacher: {
           include: {

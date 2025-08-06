@@ -6,7 +6,7 @@ import { Providers } from "@/components/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Tutor Management System",
+  title: "Anita Scholar Academy",
   description: "A comprehensive system for managing online tutoring",
 };
 

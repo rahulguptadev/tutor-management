@@ -52,7 +52,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen bg-slate-100 flex">
       {/* Mobile Hamburger */}
       <button
         className="fixed top-4 left-4 z-30 md:hidden p-2 rounded bg-white shadow"
@@ -62,25 +62,25 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <FiMenu size={24} />
       </button>
       {/* Sidebar Navigation */}
-      <aside
-        className={`fixed md:static z-20 top-0 left-0 h-full w-64 bg-white shadow flex flex-col justify-between transform transition-transform duration-200 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
-      >
-        <div>
-          <div className="flex items-center h-16 px-6 border-b border-gray-200">
-            <span className="text-xl font-bold">Tutor Management</span>
-          </div>
-          <div className="px-4 py-6">
+              <aside
+          className={`fixed md:relative z-20 top-0 left-0 h-full w-64 bg-slate-800 shadow-lg flex flex-col justify-between transform transition-transform duration-200 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+        >
+          <div>
+            <div className="flex items-center h-16 px-6 border-b border-slate-700">
+              <span className="text-lg font-bold text-white">Anita Scholar Academy</span>
+            </div>
+            <div className="px-4 py-6">
             <div className="mb-6">
-              <span className="block text-sm text-gray-500 mb-1">Signed in as</span>
-              <span className="block text-base font-medium text-gray-900">{session?.user?.name}</span>
+              <span className="block text-sm text-slate-300 mb-1">Signed in as</span>
+              <span className="block text-base font-medium text-white">{session?.user?.name}</span>
             </div>
             <nav className="space-y-2">
               {navigationGroups.map((group) => (
                 <div key={group.name}>
                   <button
                     type="button"
-                    className="flex items-center w-full px-2 py-2 text-left text-gray-700 hover:text-blue-700 hover:bg-gray-50 rounded-md focus:outline-none"
+                    className="flex items-center w-full px-2 py-2 text-left text-slate-200 hover:text-white hover:bg-slate-700 rounded-md focus:outline-none transition-colors"
                     onClick={() => toggleGroup(group.name)}
                   >
                     <group.icon className="mr-2" />
@@ -95,8 +95,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                           href={item.href}
                           className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
                             ${pathname === item.href
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-blue-700'}
+                              ? 'bg-blue-600 text-white'
+                              : 'text-slate-300 hover:bg-slate-700 hover:text-white'}
                           `}
                           onClick={() => setSidebarOpen(false)}
                         >
@@ -111,21 +111,21 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
         </div>
-        <div className="px-4 py-6 border-t border-gray-200">
+        <div className="px-4 py-6 border-t border-slate-700">
           <button
             onClick={() => signOut()}
-            className="w-full flex items-center text-left text-sm text-gray-500 hover:text-gray-700"
+            className="w-full flex items-center text-left text-sm text-slate-300 hover:text-white transition-colors"
           >
             <FiLogOut className="mr-2" /> Sign out
           </button>
         </div>
       </aside>
-      {/* Main Content */}
-      <main className="flex-1 md:ml-64">
-        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-          {children}
-        </div>
-      </main>
+              {/* Main Content */}
+        <main className="flex-1 bg-slate-50 min-h-screen">
+          <div className="w-full h-full">
+            {children}
+          </div>
+        </main>
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div

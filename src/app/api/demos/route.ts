@@ -145,6 +145,7 @@ export async function GET(request: Request) {
 
     // Build where clause
     const where: any = {
+      isActive: true,
       scheduledDate: {
         gte: startDate,
       },

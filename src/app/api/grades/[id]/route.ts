@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { logActivity } from '@/lib/activity'
 import { ActivityType } from '@prisma/client'
 
-// GET /api/classes/[id] - Get class details
+// GET /api/grades/[id] - Get grade details
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -17,27 +17,26 @@ export async function GET(
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    const classData = await prisma.class.findUnique({
+    const grade = await prisma.grade.findUnique({
       where: { id: id },
       include: {
-        teacher: { include: { user: { select: { name: true } } } },
-        subject: { select: { name: true } },
-        students: { include: { student: { include: { user: { select: { name: true } } } } } },
+        subjects: { include: { subject: { select: { name: true } } } },
+        students: { include: { user: { select: { name: true } } } },
       },
     })
 
-    if (!classData) {
-      return new NextResponse('Class not found', { status: 404 })
+    if (!grade) {
+      return new NextResponse('Grade not found', { status: 404 })
     }
 
-    return NextResponse.json(classData)
+    return NextResponse.json(grade)
   } catch (error) {
-    console.error('Error fetching class:', error)
+    console.error('Error fetching grade:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
 
-// DELETE /api/classes/[id] - Soft delete class
+// DELETE /api/grades/[id] - Soft delete grade
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -49,35 +48,46 @@ export async function DELETE(
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    // Get the class details
-    const classData = await prisma.class.findUnique({
+    // Get the grade details
+    const grade = await prisma.grade.findUnique({
       where: { id: id },
-      include: {
-        teacher: { include: { user: { select: { name: true } } } },
-        subject: { select: { name: true } },
+    })
+
+    if (!grade) {
+      return new NextResponse('Grade not found', { status: 404 })
+    }
+
+    // Check if grade has active students
+    const activeStudents = await prisma.student.count({
+      where: { 
+        gradeId: id,
+        isActive: true 
       },
     })
 
-    if (!classData) {
-      return new NextResponse('Class not found', { status: 404 })
+    if (activeStudents > 0) {
+      return new NextResponse(
+        'Cannot delete grade that has active students. Please reassign or deactivate students first.',
+        { status: 400 }
+      )
     }
 
-    // Soft delete class
-    await prisma.class.update({
+    // Soft delete grade
+    await prisma.grade.update({
       where: { id: id },
       data: { isActive: false },
     })
 
     // Log the activity
     await logActivity(
-      ActivityType.CLASS_UPDATED,
-      `Soft deleted class: ${classData.subject.name} with ${classData.teacher.user.name}`,
+      ActivityType.SUBJECT_DELETED,
+      `Soft deleted grade: ${grade.name} (${grade.curriculum})`,
       session.user.id
     )
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {
-    console.error('Error deleting class:', error)
+    console.error('Error deleting grade:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 } 

@@ -102,9 +102,9 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
                 <tr key={classItem.id}>
                   <td className="px-6 py-4 whitespace-nowrap">{classItem.class.subject.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{classItem.class.teacher.user.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{classItem.status}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{new Date(classItem.startTime).toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{new Date(classItem.endTime).toLocaleString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{classItem.class.status}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{new Date(classItem.class.startTime).toLocaleString()}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{new Date(classItem.class.endTime).toLocaleString()}</td>
                 </tr>
               ))}
               {student.classes.length === 0 && (
@@ -124,24 +124,35 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid At</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {student.fees.map((fee: any) => (
                 <tr key={fee.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">₹{fee.amount}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{fee.status}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{new Date(fee.dueDate).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{fee.paidAt ? new Date(fee.paidAt).toLocaleDateString() : '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">₹{fee.amount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">₹{fee.paidAmount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      fee.status === 'PAID' ? 'bg-green-100 text-green-800' :
+                      fee.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                      fee.status === 'PARTIALLY_PAID' ? 'bg-blue-100 text-blue-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {fee.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">{fee.notes || '-'}</td>
                 </tr>
               ))}
               {student.fees.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                     No fees found.
                   </td>
                 </tr>

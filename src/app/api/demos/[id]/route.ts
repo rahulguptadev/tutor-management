@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { logActivity } from '@/lib/activity'
 import { ActivityType } from '@prisma/client'
 
-// GET /api/classes/[id] - Get class details
+// GET /api/demos/[id] - Get demo class details
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -17,27 +17,27 @@ export async function GET(
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    const classData = await prisma.class.findUnique({
+    const demo = await prisma.demoClass.findUnique({
       where: { id: id },
       include: {
         teacher: { include: { user: { select: { name: true } } } },
         subject: { select: { name: true } },
-        students: { include: { student: { include: { user: { select: { name: true } } } } } },
+        user: { select: { name: true } },
       },
     })
 
-    if (!classData) {
-      return new NextResponse('Class not found', { status: 404 })
+    if (!demo) {
+      return new NextResponse('Demo class not found', { status: 404 })
     }
 
-    return NextResponse.json(classData)
+    return NextResponse.json(demo)
   } catch (error) {
-    console.error('Error fetching class:', error)
+    console.error('Error fetching demo class:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }
 
-// DELETE /api/classes/[id] - Soft delete class
+// DELETE /api/demos/[id] - Soft delete demo class
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -49,8 +49,8 @@ export async function DELETE(
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    // Get the class details
-    const classData = await prisma.class.findUnique({
+    // Get the demo class details
+    const demo = await prisma.demoClass.findUnique({
       where: { id: id },
       include: {
         teacher: { include: { user: { select: { name: true } } } },
@@ -58,26 +58,26 @@ export async function DELETE(
       },
     })
 
-    if (!classData) {
-      return new NextResponse('Class not found', { status: 404 })
+    if (!demo) {
+      return new NextResponse('Demo class not found', { status: 404 })
     }
 
-    // Soft delete class
-    await prisma.class.update({
+    // Soft delete demo class
+    await prisma.demoClass.update({
       where: { id: id },
       data: { isActive: false },
     })
 
     // Log the activity
     await logActivity(
-      ActivityType.CLASS_UPDATED,
-      `Soft deleted class: ${classData.subject.name} with ${classData.teacher.user.name}`,
+      ActivityType.DEMO_CLASS_CREATED,
+      `Soft deleted demo class: ${demo.subject.name} with ${demo.teacher.user.name} for ${demo.studentName}`,
       session.user.id
     )
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {
-    console.error('Error deleting class:', error)
+    console.error('Error deleting demo class:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 } 

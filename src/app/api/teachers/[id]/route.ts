@@ -59,7 +59,7 @@ export async function PUT(
     const name = body.name as string;
     const email = body.email as string;
     const phoneNumber = body.phoneNumber as string;
-    const subjects = body.subjects; // array of subject names
+    const subjects = body.subjects; // array of subject IDs
     const bio = body.bio;
     const education = body.education;
     const qualification = body.qualification;
@@ -74,9 +74,9 @@ export async function PUT(
       return new NextResponse('Teacher not found', { status: 404 })
     }
 
-    // Look up subject IDs from names
+    // Validate that all subject IDs exist
     const subjectRecords = await prisma.subject.findMany({
-      where: { name: { in: subjects } },
+      where: { id: { in: subjects } },
       select: { id: true },
     })
     const subjectIds = subjectRecords.map(s => s.id)
@@ -89,6 +89,21 @@ export async function PUT(
         data: { name, email },
       })
 
+      // Delete existing teacher-subject relationships
+      await tx.teacherSubject.deleteMany({
+        where: { teacherId: id },
+      })
+
+      // Create new teacher-subject relationships
+      if (subjectIds.length > 0) {
+        await tx.teacherSubject.createMany({
+          data: subjectIds.map(subjectId => ({
+            teacherId: id,
+            subjectId,
+          })),
+        })
+      }
+
       // Update teacher details
       const updatedTeacher = await tx.teacher.update({
         where: { id: id },
@@ -97,9 +112,6 @@ export async function PUT(
           bio,
           education,
           qualification,
-          subjects: {
-            set: subjectIds.map(subjectId => ({ teacherId_subjectId: { teacherId: id, subjectId } })),
-          },
         },
         include: {
           user: { select: { name: true, email: true } },
@@ -123,7 +135,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/teachers/[id] - Delete teacher
+// DELETE /api/teachers/[id] - Soft delete teacher
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -138,30 +150,32 @@ export async function DELETE(
     // Get the teacher to find the associated user
     const teacher = await prisma.teacher.findUnique({
       where: { id: id },
-      select: { userId: true },
+      include: { user: { select: { name: true } } },
     })
 
     if (!teacher) {
       return new NextResponse('Teacher not found', { status: 404 })
     }
 
-    // Delete teacher and associated user in a transaction
+    // Soft delete teacher and associated user in a transaction
     await prisma.$transaction(async (tx) => {
-      // Delete teacher first (due to foreign key constraints)
-      await tx.teacher.delete({
+      // Soft delete teacher
+      await tx.teacher.update({
         where: { id: id },
+        data: { isActive: false },
       })
 
-      // Then delete the user
-      await tx.user.delete({
+      // Soft delete the user
+      await tx.user.update({
         where: { id: teacher.userId },
+        data: { isActive: false },
       })
     })
 
     // Log the activity
     await logActivity(
       ActivityType.CALENDAR_EVENT_DELETED,
-      `Deleted teacher ${id}`,
+      `Soft deleted teacher ${teacher.user.name}`,
       session.user.id
     )
 

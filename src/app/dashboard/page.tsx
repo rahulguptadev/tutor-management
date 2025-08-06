@@ -61,9 +61,9 @@ export default async function DashboardPage() {
     activities,
     allClasses,
   ] = await Promise.all([
-    prisma.student.count(),
-    prisma.teacher.count(),
-    prisma.class.count(),
+    prisma.student.count({ where: { isActive: true } }),
+    prisma.teacher.count({ where: { isActive: true } }),
+    prisma.class.count({ where: { isActive: true } }),
     prisma.lead.count(),
     prisma.fee.aggregate({
       where: { status: 'PENDING' },
@@ -75,6 +75,7 @@ export default async function DashboardPage() {
     }),
     prisma.class.findMany({
       where: {
+        isActive: true,
         startTime: {
           gte: new Date(),
         },

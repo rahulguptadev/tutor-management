@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DashboardLayout } from '@/components/dashboard-layout'
+import { DeleteButton } from '@/components/DeleteButton'
 import Link from 'next/link'
 
 type Class = {
@@ -77,83 +78,92 @@ export default async function ClassesPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Classes</h1>
+      <div className="p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div className="flex-1"></div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Classes</h1>
+            <p className="text-sm text-gray-600 mt-1">Manage class schedules and assignments</p>
+          </div>
           <Link
             href="/classes/new"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold shadow"
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm transition-colors"
           >
+            <span className="mr-2">+</span>
             Add Class
           </Link>
         </div>
-        {/* Add filter/search bar here if needed */}
-        <div className="overflow-x-auto">
-          <div className="bg-white rounded-xl shadow">
-            <table className="min-w-full divide-y divide-blue-200">
-              <thead className="bg-blue-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">#</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Subject</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Teacher</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Student</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Schedule</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">Fee</th>
-                  <th className="px-6 py-3"></th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-blue-100">
-                {classes.map((classItem: any, idx: number) => (
-                  <tr key={classItem.id} className="hover:bg-blue-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap font-bold text-blue-700">{idx + 1}</td>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{classItem.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                      {classItem.subject?.name || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{classItem.teacher.user.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                      {classItem.students && classItem.students.length > 0
-                        ? classItem.students.map((cs: any) => cs.student.user.name).join(', ')
-                        : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{new Date(classItem.startTime).toLocaleDateString()} - {new Date(classItem.endTime).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(classItem.status)}`}>
-                        {classItem.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">${classItem.fee}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+        
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teacher</th>
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-slate-200">
+              {classes.map((classItem: any, idx: number) => (
+                <tr key={classItem.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{idx + 1}</td>
+                  <td className="px-6 py-3 whitespace-nowrap font-medium text-gray-900">{classItem.name}</td>
+                  <td className="px-6 py-3 whitespace-nowrap text-gray-700">
+                    {classItem.subject?.name || '-'}
+                  </td>
+                  <td className="px-6 py-3 whitespace-nowrap text-gray-700">{classItem.teacher.user.name}</td>
+                  <td className="px-6 py-3 whitespace-nowrap text-gray-700">
+                    {classItem.students && classItem.students.length > 0
+                      ? classItem.students.map((cs: any) => cs.student.user.name).join(', ')
+                      : '-'}
+                  </td>
+                  <td className="px-6 py-3 whitespace-nowrap text-gray-700">
+                    {new Date(classItem.startTime).toLocaleDateString()} - {new Date(classItem.endTime).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-3 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(classItem.status)}`}>
+                      {classItem.status.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 whitespace-nowrap text-gray-700">${classItem.fee}</td>
+                  <td className="px-6 py-3 whitespace-nowrap">
+                    <div className="flex items-center space-x-3">
                       <Link
                         href={`/classes/${classItem.id}`}
-                        className="text-blue-600 hover:text-blue-900 mr-4 font-semibold"
+                        className="text-indigo-600 hover:text-indigo-900 font-medium"
                       >
                         View
                       </Link>
                       <Link
                         href={`/classes/${classItem.id}/edit`}
-                        className="text-blue-600 hover:text-blue-900 font-semibold"
+                        className="text-slate-600 hover:text-slate-900 font-medium"
                       >
                         Edit
                       </Link>
-                    </td>
-                  </tr>
-                ))}
-                {classes.length === 0 && (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
-                      No classes found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                      <DeleteButton
+                        entityType="class"
+                        entityId={classItem.id}
+                        entityName={`${classItem.subject?.name || 'Class'} with ${classItem.teacher.user.name}`}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {classes.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-6 py-3 text-center text-gray-500">
+                    No classes found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-        {/* Pagination here */}
       </div>
     </DashboardLayout>
   )

@@ -12,6 +12,7 @@ export async function GET() {
     }
 
     const grades = await prisma.grade.findMany({
+      where: { isActive: true },
       include: {
         _count: {
           select: {

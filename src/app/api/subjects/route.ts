@@ -12,6 +12,7 @@ export async function GET() {
     }
 
     const subjects = await prisma.subject.findMany({
+      where: { isActive: true },
       include: {
         _count: {
           select: {
@@ -137,8 +138,9 @@ export async function DELETE(req: Request) {
       )
     }
 
-    await prisma.subject.delete({
+    await prisma.subject.update({
       where: { id },
+      data: { isActive: false },
     })
 
     await logActivity(

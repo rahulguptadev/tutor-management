@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DashboardLayout } from '@/components/dashboard-layout'
+import { DeleteButton } from '@/components/DeleteButton'
 import Link from 'next/link'
-import { DeleteGradeButton } from '@/components/grades/DeleteGradeButton'
 
 export default async function GradesPage() {
   const session = await getServerSession(authOptions)
@@ -41,48 +41,52 @@ export default async function GradesPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Grades</h1>
-          <Link
-            href="/grades/new"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Add Grade
-          </Link>
+      <div className="p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Grades</h1>
+            <p className="text-sm text-gray-600 mt-1">Manage grade levels and curriculum</p>
+          </div>
+                      <Link
+              href="/grades/new"
+              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm transition-colors"
+            >
+              <span className="mr-2">+</span>
+              Add Grade
+            </Link>
         </div>
 
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Grade
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Level
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Curriculum
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Subjects
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Students
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-slate-200">
               {grades.map((grade) => (
-                <tr key={grade.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <tr key={grade.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-3 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {grade.name}
                     </div>
@@ -92,24 +96,24 @@ export default async function GradesPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-3 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
                       {grade.level}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-3 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
                       {grade.curriculum}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-3">
                     <div className="text-sm text-gray-900">
                       {grade.subjects.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {grade.subjects.map((gs) => (
                             <span
                               key={gs.subject.name}
-                              className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                              className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full"
                             >
                               {gs.subject.name}
                             </span>
@@ -120,12 +124,12 @@ export default async function GradesPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-3 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
                       {grade._count.students} students
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-3 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       grade.isActive 
                         ? 'bg-green-100 text-green-800' 
@@ -134,14 +138,20 @@ export default async function GradesPage() {
                       {grade.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link
-                      href={`/grades/${grade.id}/edit`}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      Edit
-                    </Link>
-                    <DeleteGradeButton gradeId={grade.id} />
+                  <td className="px-6 py-3 whitespace-nowrap">
+                    <div className="flex items-center space-x-3">
+                      <Link
+                        href={`/grades/${grade.id}/edit`}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        Edit
+                      </Link>
+                      <DeleteButton
+                        entityType="grade"
+                        entityId={grade.id}
+                        entityName={`${grade.name} (${grade.curriculum})`}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

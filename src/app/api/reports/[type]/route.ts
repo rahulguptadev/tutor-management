@@ -15,8 +15,8 @@ function parseDateRange(dateRange: string) {
   }
 }
 
-export async function GET(req: Request, context: { params: { type: string } }) {
-  const { type } = context.params;
+export async function GET(req: Request, context: { params: Promise<{ type: string }> }) {
+  const { type } = await context.params;
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status') || 'all'
   const dateRange = searchParams.get('dateRange') || 'all'

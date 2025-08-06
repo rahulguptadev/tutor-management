@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { DashboardLayout } from '@/components/dashboard-layout'
+import Select from 'react-select'
 
 const teacherSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -13,11 +14,16 @@ const teacherSchema = z.object({
   phoneNumber: z.string().optional(),
   education: z.string().optional(),
   qualification: z.string().optional(),
-  subjects: z.string().min(1, 'At least one subject is required'),
+  subjects: z.array(z.string()).min(1, 'At least one subject is required'),
   bio: z.string().optional(),
 })
 
 type TeacherFormData = z.infer<typeof teacherSchema>
+
+interface Subject {
+  id: string
+  name: string
+}
 
 interface EditTeacherFormProps {
   teacherId: string
@@ -28,15 +34,33 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [initialData, setInitialData] = useState<TeacherFormData | null>(null)
+  const [subjects, setSubjects] = useState<Subject[]>([])
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([])
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<TeacherFormData>({
     resolver: zodResolver(teacherSchema),
   })
+
+  useEffect(() => {
+    async function fetchSubjects() {
+      try {
+        const response = await fetch('/api/subjects')
+        if (response.ok) {
+          const data = await response.json()
+          setSubjects(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch subjects:', error)
+      }
+    }
+    fetchSubjects()
+  }, [])
 
   useEffect(() => {
     async function fetchTeacher() {
@@ -46,13 +70,14 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
           throw new Error('Failed to fetch teacher')
         }
         const data = await response.json()
+        
         const formData = {
           name: data.user.name,
           email: data.user.email,
           phoneNumber: data.phoneNumber || '',
           education: data.education || '',
           qualification: data.qualification || '',
-          subjects: data.subjects.join(', '),
+          subjects: data.subjects,
           bio: data.bio || '',
         }
         setInitialData(formData)
@@ -63,6 +88,21 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
     }
     fetchTeacher()
   }, [teacherId, reset])
+
+  // Update selected subject IDs when subjects are loaded and teacher data is available
+  useEffect(() => {
+    if (subjects.length > 0 && initialData) {
+      const subjectIds = initialData.subjects
+        .map((subjectName: string) => {
+          const subject = subjects.find(s => s.name === subjectName)
+          return subject?.id || ''
+        })
+        .filter(id => id !== '')
+      setSelectedSubjectIds(subjectIds)
+    }
+  }, [subjects, initialData])
+
+  const subjectOptions = subjects.map(subject => ({ value: subject.id, label: subject.name }))
 
   async function onSubmit(data: TeacherFormData) {
     setError('')
@@ -75,7 +115,7 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
         body: JSON.stringify({
           ...data,
           phoneNumber: data.phoneNumber || null,
-          subjects: data.subjects.split(',').map(s => s.trim()),
+          subjects: selectedSubjectIds,
         }),
       })
 
@@ -188,13 +228,16 @@ export function EditTeacherForm({ teacherId }: EditTeacherFormProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Subjects (comma-separated)
+              Subjects
             </label>
-            <input
-              type="text"
-              {...register('subjects')}
-              placeholder="e.g., Mathematics, Physics, Chemistry"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+            <Select
+              isMulti
+              options={subjectOptions}
+              value={subjectOptions.filter(opt => selectedSubjectIds.includes(opt.value))}
+              onChange={selected => setSelectedSubjectIds(selected.map(opt => opt.value))}
+              className="mt-1"
+              classNamePrefix="react-select"
+              placeholder="Select subjects..."
             />
             {errors.subjects && (
               <p className="mt-1 text-sm text-red-600">{errors.subjects.message}</p>

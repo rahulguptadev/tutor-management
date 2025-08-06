@@ -85,6 +85,7 @@ model User {
   email         String    @unique
   password      String
   role          UserRole
+  isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   teacher       Teacher?
@@ -98,6 +99,7 @@ model Subject {
   id            String    @id @default(cuid())
   name          String    @unique
   description   String?
+  isActive      Boolean   @default(true)
   teachers      TeacherSubject[]
   classes       Class[]
   demoClasses   DemoClass[]
@@ -116,6 +118,7 @@ model Teacher {
   education     String?   // New field for education
   qualification String?   // New field for qualification
   availability  Json      // Store availability as JSON
+  isActive      Boolean   @default(true)
   classes       Class[]
   payouts       Payout[]
   calendarEvents CalendarEvent[]
@@ -150,6 +153,7 @@ model Student {
   fatherContact String?
   motherName    String?
   motherContact String?
+  isActive      Boolean   @default(true)
   enrolledSubjects StudentEnrolledSubject[]
   classes       ClassStudent[]
   fees          Fee[]
@@ -184,6 +188,7 @@ model Class {
   recurrence    RecurrenceType?
   recurrenceEnd DateTime?
   calendarEvent CalendarEvent?
+  isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -269,6 +274,7 @@ model DemoClass {
   scheduledTime String    // HH:mm format
   status        String    @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
   notes         String?
+  isActive      Boolean   @default(true)
   createdBy     String
   user          User      @relation(fields: [createdBy], references: [id])
   createdAt     DateTime  @default(now())

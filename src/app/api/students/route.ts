@@ -88,6 +88,7 @@ export async function GET() {
     }
 
     const students = await prisma.student.findMany({
+      where: { isActive: true },
       include: {
         user: {
           select: {
