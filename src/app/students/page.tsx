@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DashboardLayout } from '@/components/dashboard-layout'
-import { DeleteButton } from '@/components/DeleteButton'
+import { DeleteStudentButton } from '@/components/students/DeleteStudentButton'
 import Link from 'next/link'
 
 interface SearchParams {
@@ -51,7 +51,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
   const order = resolvedSearchParams?.order || 'desc';
 
   // Build filters
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { isActive: true };
   if (search) {
     where.OR = [
       { user: { name: { contains: search, mode: 'insensitive' } } },
@@ -232,10 +232,9 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                       >
                         Edit
                       </Link>
-                      <DeleteButton
-                        entityType="student"
-                        entityId={student.id}
-                        entityName={student.user.name}
+                      <DeleteStudentButton
+                        studentId={student.id}
+                        studentName={student.user.name}
                       />
                     </div>
                   </td>

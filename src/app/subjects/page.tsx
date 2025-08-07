@@ -14,6 +14,7 @@ export default async function SubjectsPage() {
   }
 
   const subjects = await prisma.subject.findMany({
+    where: { isActive: true },
     include: {
       _count: {
         select: {

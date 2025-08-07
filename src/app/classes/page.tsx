@@ -35,6 +35,7 @@ export default async function ClassesPage() {
   }
 
   const classes = await prisma.class.findMany({
+    where: { isActive: true },
     include: {
       teacher: {
         include: {
