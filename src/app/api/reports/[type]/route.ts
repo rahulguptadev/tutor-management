@@ -60,6 +60,7 @@ export async function GET(req: Request, context: { params: Promise<{ type: strin
         user: {
           select: {
             name: true,
+            email: true,
           },
         },
         grade: {

@@ -60,6 +60,7 @@ export async function GET(request: Request) {
             user: {
               select: {
                 name: true,
+                email: true,
               },
             },
             grade: {
@@ -84,15 +85,20 @@ export async function GET(request: Request) {
         data = students.map(student => ({
           'Student ID': student.id,
           'Name': student.user.name,
+          'Email': student.user.email,
           'Grade': student.grade ? `${student.grade.name} (${student.grade.curriculum})` : '',
           'Subjects': student.enrolledSubjects.map(es => es.subject.name).join('; '),
           'School': student.school || '',
           'Mobile Number': student.mobileNumber || '',
+          'Father Name': student.fatherName || '',
+          'Father Contact': student.fatherContact || '',
+          'Mother Name': student.motherName || '',
+          'Mother Contact': student.motherContact || '',
           'Status': student.isActive ? 'Enrolled' : 'Not Enrolled',
           'Created At': student.createdAt.toLocaleDateString(),
         }))
 
-        headers = ['Student ID', 'Name', 'Grade', 'Subjects', 'School', 'Mobile Number', 'Status', 'Created At']
+        headers = ['Student ID', 'Name', 'Email', 'Grade', 'Subjects', 'School', 'Mobile Number', 'Father Name', 'Father Contact', 'Mother Name', 'Mother Contact', 'Status', 'Created At']
         break
       }
 
