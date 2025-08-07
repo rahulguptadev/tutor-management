@@ -97,6 +97,23 @@ export async function GET(request: Request) {
       }
 
       case 'teachers': {
+        // Handle status filter for teachers (map to isActive field)
+        if (status === 'active') {
+          where.isActive = true;
+        } else if (status === 'inactive') {
+          where.isActive = false;
+        }
+        // If status is 'all', we don't add any filter
+
+        // If subject filter is applied, we need to filter teachers who teach that subject
+        if (subject) {
+          where.subjects = {
+            some: {
+              subjectId: subject
+            }
+          }
+        }
+
         const teachers = await prisma.teacher.findMany({
           where,
           include: {
@@ -108,7 +125,11 @@ export async function GET(request: Request) {
             },
             subjects: {
               include: {
-                subject: true,
+                subject: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -119,13 +140,16 @@ export async function GET(request: Request) {
           'Teacher ID': teacher.id,
           'Name': teacher.user.name,
           'Email': teacher.user.email,
-          'Subjects': teacher.subjects.map(ts => ts.subject.name).join(', '),
-          'Education': teacher.education,
-          'Qualification': teacher.qualification,
+          'Phone Number': teacher.phoneNumber || '',
+          'Subjects': teacher.subjects.map(ts => ts.subject.name).join('; '),
+          'Education': teacher.education || '',
+          'Qualification': teacher.qualification || '',
+          'Bio': teacher.bio || '',
+          'Status': teacher.isActive ? 'Active' : 'Inactive',
           'Created At': teacher.createdAt.toLocaleDateString(),
         }))
 
-        headers = ['Teacher ID', 'Name', 'Email', 'Subjects', 'Education', 'Qualification', 'Created At']
+        headers = ['Teacher ID', 'Name', 'Email', 'Phone Number', 'Subjects', 'Education', 'Qualification', 'Bio', 'Status', 'Created At']
         break
       }
 

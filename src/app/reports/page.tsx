@@ -46,7 +46,7 @@ export default function ReportsPage() {
 
   // Fetch grades and subjects for filters
   useEffect(() => {
-    if (tab === "students") {
+    if (tab === "students" || tab === "teachers") {
       Promise.all([
         fetch('/api/grades').then(res => res.ok ? res.json() : []),
         fetch('/api/subjects').then(res => res.ok ? res.json() : [])
@@ -92,12 +92,16 @@ export default function ReportsPage() {
         status: s.isActive ? 'Enrolled' : 'Not Enrolled',
       }));
     } else if (tab === "teachers") {
-      headers = ["name", "email", "phone", "subjects"];
+      headers = ["name", "email", "phone", "subjects", "education", "qualification", "bio", "status"];
       rows = data.map((t: any) => ({
         name: t.user?.name,
         email: t.user?.email,
         phone: t.phoneNumber || '-',
         subjects: (t.subjects ?? []).map((ts: any) => ts.subject?.name).join("; ") ?? "",
+        education: t.education || '-',
+        qualification: t.qualification || '-',
+        bio: t.bio || '-',
+        status: t.isActive ? 'Active' : 'Inactive',
       }));
     } else if (tab === "classes") {
       headers = ["class", "teacher", "students", "status"];
@@ -137,9 +141,9 @@ export default function ReportsPage() {
           value={status}
           onChange={e => setStatus(e.target.value)}
         >
-          {STATUS_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
+          <option value="all">All</option>
+          <option value="active">{tab === "students" ? "Enrolled" : "Active"}</option>
+          <option value="inactive">{tab === "students" ? "Not Enrolled" : "Inactive"}</option>
         </select>
       </div>
       <div>
@@ -183,6 +187,21 @@ export default function ReportsPage() {
             </select>
           </div>
         </>
+      )}
+      {tab === "teachers" && (
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Subject</label>
+          <select
+            className="border rounded px-2 py-1"
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+          >
+            <option value="">All Subjects</option>
+            {subjects.map((s: any) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
       )}
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
@@ -273,16 +292,53 @@ export default function ReportsPage() {
                 <th className="px-4 py-2 text-left">Email</th>
                 <th className="px-4 py-2 text-left">Phone</th>
                 <th className="px-4 py-2 text-left">Subjects</th>
+                <th className="px-4 py-2 text-left">Education</th>
+                <th className="px-4 py-2 text-left">Qualification</th>
+                <th className="px-4 py-2 text-left">Bio</th>
+                <th className="px-4 py-2 text-left">Status</th>
               </tr>
             </thead>
             <tbody>
               {data.map((t: any, idx: number) => (
                 <tr key={t.id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
-                  <td className="px-4 py-2">{t.user?.name}</td>
+                  <td className="px-4 py-2 font-medium">{t.user?.name}</td>
                   <td className="px-4 py-2">{t.user?.email}</td>
                   <td className="px-4 py-2">{t.phoneNumber || '-'}</td>
-                  <td className="px-4 py-2">{(t.subjects ?? []).map((ts: any) => ts.subject?.name).join(", ")}</td>
+                  <td className="px-4 py-2">
+                    {t.subjects?.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {t.subjects.map((ts: any, index: number) => (
+                          <span
+                            key={ts.subject?.name ?? index}
+                            className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"
+                          >
+                            {ts.subject?.name ?? 'Unknown'}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">No subjects</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 max-w-xs truncate" title={t.education || ''}>
+                    {t.education || '-'}
+                  </td>
+                  <td className="px-4 py-2 max-w-xs truncate" title={t.qualification || ''}>
+                    {t.qualification || '-'}
+                  </td>
+                  <td className="px-4 py-2 max-w-xs truncate" title={t.bio || ''}>
+                    {t.bio || '-'}
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      t.isActive 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {t.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>

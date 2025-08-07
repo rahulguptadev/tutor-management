@@ -81,18 +81,50 @@ export async function GET(req: Request, context: { params: Promise<{ type: strin
       orderBy: { createdAt: 'desc' },
     })
   } else if (type === 'teachers') {
+    const where: any = {
+      ...(search && {
+        user: {
+          is: { name: { contains: search, mode: 'insensitive' } },
+        },
+      }),
+      ...(parseDateRange(dateRange) && { createdAt: parseDateRange(dateRange) }),
+    }
+
+    // Handle status filter for teachers (map to isActive field)
+    if (status === 'active') {
+      where.isActive = true;
+    } else if (status === 'inactive') {
+      where.isActive = false;
+    }
+    // If status is 'all', we don't add any filter
+
+    // If subject filter is applied, we need to filter teachers who teach that subject
+    if (subject) {
+      where.subjects = {
+        some: {
+          subjectId: subject
+        }
+      }
+    }
+
     data = await prisma.teacher.findMany({
-      where: {
-        ...(search && {
-          user: {
-            is: { name: { contains: search, mode: 'insensitive' } },
-          },
-        }),
-        ...(parseDateRange(dateRange) && { createdAt: parseDateRange(dateRange) }),
-      },
+      where,
       include: {
-        user: true,
-        subjects: { include: { subject: true } },
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        subjects: { 
+          include: { 
+            subject: { 
+              select: { 
+                name: true 
+              } 
+            } 
+          } 
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
