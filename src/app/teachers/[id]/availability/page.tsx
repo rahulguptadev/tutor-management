@@ -16,8 +16,9 @@ type TeacherAvailabilityType = {
   updatedAt: Date
 }
 
-export default async function TeacherAvailabilityPage({ params }: any) {
+export default async function TeacherAvailabilityPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions)
+  const { id } = await params
 
   if (!session) {
     redirect('/auth/signin')
@@ -25,12 +26,12 @@ export default async function TeacherAvailabilityPage({ params }: any) {
 
   // Only allow admins or the teacher themselves to access this page
   if (session.user.role !== 'ADMIN' && 
-      (session.user.role !== 'TEACHER' || session.user.id !== params.id)) {
+      (session.user.role !== 'TEACHER' || session.user.id !== id)) {
     redirect('/dashboard')
   }
 
   const teacher = await prisma.teacher.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       user: {
         select: {

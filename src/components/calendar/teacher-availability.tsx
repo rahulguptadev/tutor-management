@@ -122,7 +122,11 @@ export function TeacherAvailability({
   return (
     <div className="space-y-6">
       {DAYS_OF_WEEK.map((dayName, dayIndex) => {
-        const dayAvailability = availability.find((d) => d.day === dayIndex)!
+        const dayAvailability = availability.find((d) => d.day === dayIndex) || {
+          day: dayIndex,
+          isAvailable: false,
+          slots: []
+        }
         return (
           <div key={dayName} className="border rounded p-4">
             <div className="flex items-center justify-between mb-4">

@@ -37,6 +37,22 @@ export async function GET(request: Request) {
       case 'students': {
         if (grade) where.gradeId = grade
         if (school) where.school = school
+        
+        // Handle status filter for students (map to isActive field)
+        if (status === 'active') {
+          where.isActive = true;
+        } else if (status === 'inactive') {
+          where.isActive = false;
+        }
+        // If status is 'all', we don't add any filter
+        
+        if (subject) {
+          where.enrolledSubjects = {
+            some: {
+              subjectId: subject
+            }
+          }
+        }
 
         const students = await prisma.student.findMany({
           where,
@@ -44,13 +60,21 @@ export async function GET(request: Request) {
             user: {
               select: {
                 name: true,
-                email: true,
               },
             },
             grade: {
               select: {
                 name: true,
                 curriculum: true,
+              },
+            },
+            enrolledSubjects: {
+              include: {
+                subject: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -60,14 +84,15 @@ export async function GET(request: Request) {
         data = students.map(student => ({
           'Student ID': student.id,
           'Name': student.user.name,
-          'Email': student.user.email,
           'Grade': student.grade ? `${student.grade.name} (${student.grade.curriculum})` : '',
+          'Subjects': student.enrolledSubjects.map(es => es.subject.name).join('; '),
           'School': student.school || '',
           'Mobile Number': student.mobileNumber || '',
+          'Status': student.isActive ? 'Enrolled' : 'Not Enrolled',
           'Created At': student.createdAt.toLocaleDateString(),
         }))
 
-        headers = ['Student ID', 'Name', 'Email', 'Grade', 'School', 'Mobile Number', 'Created At']
+        headers = ['Student ID', 'Name', 'Grade', 'Subjects', 'School', 'Mobile Number', 'Status', 'Created At']
         break
       }
 
@@ -105,7 +130,7 @@ export async function GET(request: Request) {
       }
 
       case 'classes': {
-        if (subject) where.subject = subject
+        if (subject) where.subjectId = subject
         if (status) where.status = status
 
         const classes = await prisma.class.findMany({
@@ -116,9 +141,13 @@ export async function GET(request: Request) {
                 user: { select: { name: true } },
               },
             },
-            student: {
+            students: {
               include: {
-                user: { select: { name: true } },
+                student: {
+                  include: {
+                    user: { select: { name: true } },
+                  },
+                },
               },
             },
             subject: {
@@ -132,7 +161,7 @@ export async function GET(request: Request) {
           'Class ID': cls.id,
           'Subject': cls.subject.name,
           'Teacher': cls.teacher.user.name,
-          'Student': cls.student.user.name,
+          'Students': cls.students.map(cs => cs.student.user.name).join(', '),
           'Start Time': cls.startTime.toLocaleString(),
           'End Time': cls.endTime.toLocaleString(),
           'Status': cls.status,
@@ -141,7 +170,7 @@ export async function GET(request: Request) {
           'Created At': cls.createdAt.toLocaleDateString(),
         }))
 
-        headers = ['Class ID', 'Subject', 'Teacher', 'Student', 'Start Time', 'End Time', 'Status', 'Is Recurring', 'Recurrence', 'Created At']
+        headers = ['Class ID', 'Subject', 'Teacher', 'Students', 'Start Time', 'End Time', 'Status', 'Is Recurring', 'Recurrence', 'Created At']
         break
       }
 

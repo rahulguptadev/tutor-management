@@ -12,8 +12,8 @@ const TABS = [
 
 const STATUS_OPTIONS = [
   { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
+  { label: "Enrolled", value: "active" },
+  { label: "Not Enrolled", value: "inactive" },
 ];
 
 const DATE_OPTIONS = [
@@ -36,29 +36,60 @@ export default function ReportsPage() {
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState("all");
   const [search, setSearch] = useState("");
+  const [grade, setGrade] = useState("");
+  const [subject, setSubject] = useState("");
   const [data, setData] = useState<any[]>([]);
+  const [grades, setGrades] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Fetch grades and subjects for filters
+  useEffect(() => {
+    if (tab === "students") {
+      Promise.all([
+        fetch('/api/grades').then(res => res.ok ? res.json() : []),
+        fetch('/api/subjects').then(res => res.ok ? res.json() : [])
+      ]).then(([gradesData, subjectsData]) => {
+        setGrades(gradesData);
+        setSubjects(subjectsData);
+      }).catch(() => {
+        setGrades([]);
+        setSubjects([]);
+      });
+    }
+  }, [tab]);
 
   useEffect(() => {
     setLoading(true);
     setError("");
-    fetch(`/api/reports/${tab}?status=${status}&dateRange=${dateRange}&search=${encodeURIComponent(search)}`)
+    const params = new URLSearchParams({
+      status,
+      dateRange,
+      search: search,
+      ...(grade && { grade }),
+      ...(subject && { subject }),
+    });
+    
+    fetch(`/api/reports/${tab}?${params}`)
       .then(res => res.ok ? res.json() : Promise.reject(res))
       .then(setData)
       .catch(() => setError("Failed to load data"))
       .finally(() => setLoading(false));
-  }, [tab, status, dateRange, search]);
+  }, [tab, status, dateRange, search, grade, subject]);
 
   const handleExport = () => {
     let headers: string[] = [];
     let rows: any[] = [];
     if (tab === "students") {
-      headers = ["name", "email", "grade"];
+      headers = ["name", "grade", "subjects", "phone_number", "school", "status"];
       rows = data.map((s: any) => ({
         name: s.user?.name,
-        email: s.user?.email,
         grade: s.grade ? `${s.grade.name} (${s.grade.curriculum})` : '-',
+        subjects: s.enrolledSubjects?.map((es: any) => es.subject?.name).join("; ") || '-',
+        phone_number: s.mobileNumber || '-',
+        school: s.school || '-',
+        status: s.isActive ? 'Enrolled' : 'Not Enrolled',
       }));
     } else if (tab === "teachers") {
       headers = ["name", "email", "phone", "subjects"];
@@ -69,18 +100,18 @@ export default function ReportsPage() {
         subjects: (t.subjects ?? []).map((ts: any) => ts.subject?.name).join("; ") ?? "",
       }));
     } else if (tab === "classes") {
-      headers = ["class", "teacher", "student", "status"];
+      headers = ["class", "teacher", "students", "status"];
       rows = data.map((c: any) => ({
         class: c.subject?.name,
         teacher: c.teacher?.user?.name,
-        student: c.student?.user?.name,
+        students: c.students?.map((cs: any) => cs.student?.user?.name).join("; ") || '-',
         status: c.status,
       }));
     } else if (tab === "attendance") {
-      headers = ["date", "student", "teacher", "status"];
+      headers = ["date", "students", "teacher", "status"];
       rows = data.map((a: any) => ({
         date: a.startTime?.slice(0, 10),
-        student: a.student?.user?.name,
+        students: a.students?.map((cs: any) => cs.student?.user?.name).join("; ") || '-',
         teacher: a.teacher?.user?.name,
         status: a.status === "COMPLETED" ? "Present" : "Absent",
       }));
@@ -123,6 +154,36 @@ export default function ReportsPage() {
           ))}
         </select>
       </div>
+      {tab === "students" && (
+        <>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Grade</label>
+            <select
+              className="border rounded px-2 py-1"
+              value={grade}
+              onChange={e => setGrade(e.target.value)}
+            >
+              <option value="">All Grades</option>
+              {grades.map((g: any) => (
+                <option key={g.id} value={g.id}>{g.name} ({g.curriculum})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Subject</label>
+            <select
+              className="border rounded px-2 py-1"
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+            >
+              <option value="">All Subjects</option>
+              {subjects.map((s: any) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
         <input
@@ -155,8 +216,11 @@ export default function ReportsPage() {
               <tr>
                 <th className="px-4 py-2 text-left w-16">S.No</th>
                 <th className="px-4 py-2 text-left">Name</th>
-                <th className="px-4 py-2 text-left">Email</th>
                 <th className="px-4 py-2 text-left">Grade</th>
+                <th className="px-4 py-2 text-left">Subjects</th>
+                <th className="px-4 py-2 text-left">Phone Number</th>
+                <th className="px-4 py-2 text-left">School</th>
+                <th className="px-4 py-2 text-left">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -164,8 +228,34 @@ export default function ReportsPage() {
                 <tr key={s.id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
                   <td className="px-4 py-2">{s.user?.name}</td>
-                  <td className="px-4 py-2">{s.user?.email}</td>
                   <td className="px-4 py-2">{s.grade ? `${s.grade.name} (${s.grade.curriculum})` : '-'}</td>
+                  <td className="px-4 py-2">
+                    {s.enrolledSubjects?.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {s.enrolledSubjects.map((es: any, index: number) => (
+                          <span
+                            key={es.subject?.name ?? index}
+                            className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full"
+                          >
+                            {es.subject?.name ?? 'Unknown'}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">No subjects</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">{s.mobileNumber || '-'}</td>
+                  <td className="px-4 py-2">{s.school || '-'}</td>
+                  <td className="px-4 py-2">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      s.isActive 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {s.isActive ? 'Enrolled' : 'Not Enrolled'}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -208,7 +298,7 @@ export default function ReportsPage() {
                 <th className="px-4 py-2 text-left w-16">S.No</th>
                 <th className="px-4 py-2 text-left">Class</th>
                 <th className="px-4 py-2 text-left">Teacher</th>
-                <th className="px-4 py-2 text-left">Student</th>
+                <th className="px-4 py-2 text-left">Students</th>
                 <th className="px-4 py-2 text-left">Status</th>
               </tr>
             </thead>
@@ -218,7 +308,7 @@ export default function ReportsPage() {
                   <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
                   <td className="px-4 py-2">{c.subject?.name}</td>
                   <td className="px-4 py-2">{c.teacher?.user?.name}</td>
-                  <td className="px-4 py-2">{c.student?.user?.name}</td>
+                  <td className="px-4 py-2">{c.students?.map((cs: any) => cs.student?.user?.name).join(", ") || '-'}</td>
                   <td className="px-4 py-2">{c.status}</td>
                 </tr>
               ))}
@@ -234,7 +324,7 @@ export default function ReportsPage() {
               <tr>
                 <th className="px-4 py-2 text-left w-16">S.No</th>
                 <th className="px-4 py-2 text-left">Date</th>
-                <th className="px-4 py-2 text-left">Student</th>
+                <th className="px-4 py-2 text-left">Students</th>
                 <th className="px-4 py-2 text-left">Teacher</th>
                 <th className="px-4 py-2 text-left">Status</th>
               </tr>
@@ -244,7 +334,7 @@ export default function ReportsPage() {
                 <tr key={a.id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
                   <td className="px-4 py-2">{a.startTime?.slice(0, 10)}</td>
-                  <td className="px-4 py-2">{a.student?.user?.name}</td>
+                  <td className="px-4 py-2">{a.students?.map((cs: any) => cs.student?.user?.name).join(", ") || '-'}</td>
                   <td className="px-4 py-2">{a.teacher?.user?.name}</td>
                   <td className="px-4 py-2">{a.status === "COMPLETED" ? "Present" : "Absent"}</td>
                 </tr>

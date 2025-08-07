@@ -21,21 +21,62 @@ export async function GET(req: Request, context: { params: Promise<{ type: strin
   const status = searchParams.get('status') || 'all'
   const dateRange = searchParams.get('dateRange') || 'all'
   const search = searchParams.get('search') || ''
+  const grade = searchParams.get('grade') || ''
+  const subject = searchParams.get('subject') || ''
 
   let data = []
 
   if (type === 'students') {
+    const where: any = {
+      ...(search && {
+        user: {
+          is: { name: { contains: search, mode: 'insensitive' } },
+        },
+      }),
+      ...(grade && { gradeId: grade }),
+      ...(parseDateRange(dateRange) && { createdAt: parseDateRange(dateRange) }),
+    }
+
+    // Handle status filter for students (map to isActive field)
+    if (status === 'active') {
+      where.isActive = true;
+    } else if (status === 'inactive') {
+      where.isActive = false;
+    }
+    // If status is 'all', we don't add any filter
+
+    // If subject filter is applied, we need to filter students who are enrolled in that subject
+    if (subject) {
+      where.enrolledSubjects = {
+        some: {
+          subjectId: subject
+        }
+      }
+    }
+
     data = await prisma.student.findMany({
-      where: {
-        ...(search && {
-          user: {
-            is: { name: { contains: search, mode: 'insensitive' } },
-          },
-        }),
-        ...(parseDateRange(dateRange) && { createdAt: parseDateRange(dateRange) }),
-      },
+      where,
       include: {
-        user: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
+        grade: {
+          select: {
+            name: true,
+            curriculum: true,
+          },
+        },
+        enrolledSubjects: {
+          include: {
+            subject: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -61,14 +102,18 @@ export async function GET(req: Request, context: { params: Promise<{ type: strin
         ...(status !== 'all' && { status: status.toUpperCase() }),
         ...(search && {
           OR: [
-            { student: { user: { name: { contains: search, mode: 'insensitive' } } } },
+            { students: { some: { student: { user: { name: { contains: search, mode: 'insensitive' } } } } } },
             { teacher: { user: { name: { contains: search, mode: 'insensitive' } } } },
           ],
         }),
         ...(parseDateRange(dateRange) && { createdAt: parseDateRange(dateRange) }),
       },
       include: {
-        student: { include: { user: true } },
+        students: { 
+          include: { 
+            student: { include: { user: true } } 
+          } 
+        },
         teacher: { include: { user: true } },
         subject: true,
       },
@@ -79,14 +124,18 @@ export async function GET(req: Request, context: { params: Promise<{ type: strin
       where: {
         ...(search && {
           OR: [
-            { student: { user: { name: { contains: search, mode: 'insensitive' } } } },
+            { students: { some: { student: { user: { name: { contains: search, mode: 'insensitive' } } } } } },
             { teacher: { user: { name: { contains: search, mode: 'insensitive' } } } },
           ],
         }),
         ...(parseDateRange(dateRange) && { createdAt: parseDateRange(dateRange) }),
       },
       include: {
-        student: { include: { user: true } },
+        students: { 
+          include: { 
+            student: { include: { user: true } } 
+          } 
+        },
         teacher: { include: { user: true } },
       },
       orderBy: { createdAt: 'desc' },
