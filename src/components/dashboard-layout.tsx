@@ -24,6 +24,7 @@ const navigationGroups = [
       { name: 'Find Teachers', href: '/teachers/search', icon: FiSearch },
       { name: 'Classes', href: '/classes', icon: FiBook },
       { name: 'Demo Classes', href: '/demos', icon: FiCalendar },
+      { name: 'Attendance', href: '/attendance', icon: FiCalendar },
       { name: 'Grades', href: '/grades', icon: FiAward },
       { name: 'Subjects', href: '/subjects', icon: FiLayers },
       { name: 'Leads', href: '/leads', icon: FiBriefcase },

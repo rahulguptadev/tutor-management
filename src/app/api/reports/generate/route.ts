@@ -232,6 +232,96 @@ export async function GET(request: Request) {
         break
       }
 
+      case 'attendance': {
+        const attendanceType = searchParams.get('attendanceType')
+        
+        const attendance = await prisma.classAttendance.findMany({
+          where: {
+            ...where,
+            ...(status !== 'all' && attendanceType === 'teacher' && { teacherStatus: status }),
+            ...(status !== 'all' && attendanceType === 'student' && {
+              studentAttendance: {
+                some: {
+                  status: status
+                }
+              }
+            }),
+          },
+          include: {
+            class: {
+              include: {
+                teacher: {
+                  include: {
+                    user: { select: { name: true } },
+                  },
+                },
+                subject: {
+                  select: { name: true },
+                },
+              },
+            },
+            studentAttendance: {
+              include: {
+                student: {
+                  include: {
+                    user: { select: { name: true } },
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { date: 'desc' },
+        })
+
+        if (attendanceType === 'student') {
+          // Export student attendance records
+          data = attendance.flatMap(att => 
+            att.studentAttendance.map(sa => ({
+              'Date': att.date.toLocaleDateString(),
+              'Student': sa.student.user.name,
+              'Class': att.class.subject.name,
+              'Subject': att.class.subject.name,
+              'Status': sa.status,
+              'Notes': sa.notes || '',
+              'Marked At': att.markedAt.toLocaleString(),
+            }))
+          )
+          headers = ['Date', 'Student', 'Class', 'Subject', 'Status', 'Notes', 'Marked At']
+        } else if (attendanceType === 'teacher') {
+          // Export teacher attendance records
+          data = attendance.map(att => ({
+            'Date': att.date.toLocaleDateString(),
+            'Teacher': att.class.teacher.user.name,
+            'Class': att.class.subject.name,
+            'Subject': att.class.subject.name,
+            'Status': att.teacherStatus,
+            'Notes': att.teacherNotes || '',
+            'Marked At': att.markedAt.toLocaleString(),
+          }))
+          headers = ['Date', 'Teacher', 'Class', 'Subject', 'Status', 'Notes', 'Marked At']
+        } else {
+          // Export all attendance summary
+          data = attendance.map(att => {
+            const presentStudents = att.studentAttendance.filter(sa => sa.status === 'PRESENT').length;
+            const totalStudents = att.studentAttendance.length;
+            
+            return {
+              'Date': att.date.toLocaleDateString(),
+              'Class': att.class.subject.name,
+              'Teacher': att.class.teacher.user.name,
+              'Teacher Status': att.teacherStatus,
+              'Students Present': presentStudents,
+              'Total Students': totalStudents,
+              'Attendance Rate': totalStudents > 0 ? `${Math.round((presentStudents / totalStudents) * 100)}%` : '0%',
+              'Notes': att.teacherNotes || '',
+              'Marked At': att.markedAt.toLocaleString(),
+            }
+          })
+          headers = ['Date', 'Class', 'Teacher', 'Teacher Status', 'Students Present', 'Total Students', 'Attendance Rate', 'Notes', 'Marked At']
+        }
+        break
+      }
+
       default:
         return new NextResponse('Invalid report type', { status: 400 })
     }

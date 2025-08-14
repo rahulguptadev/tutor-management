@@ -61,6 +61,16 @@ enum ActivityType {
   DEMO_CLASS_CREATED
   DEMO_CLASS_UPDATED
   DEMO_CLASS_CANCELLED
+  ATTENDANCE_MARKED
+  ATTENDANCE_UPDATED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  CANCELLED
+  NOT_SCHEDULED
 }
 
 enum RecurrenceType {
@@ -157,6 +167,7 @@ model Student {
   enrolledSubjects StudentEnrolledSubject[]
   classes       ClassStudent[]
   fees          Fee[]
+  attendance    StudentAttendance[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -188,6 +199,7 @@ model Class {
   recurrence    RecurrenceType?
   recurrenceEnd DateTime?
   calendarEvent CalendarEvent?
+  attendance    ClassAttendance[]
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -332,4 +344,33 @@ model StudentEnrolledSubject {
   subject    Subject  @relation(fields: [subjectId], references: [id])
 
   @@unique([studentId, subjectId])
+}
+
+model ClassAttendance {
+  id            String           @id @default(cuid())
+  classId       String
+  class         Class            @relation(fields: [classId], references: [id])
+  date          DateTime         // The date for which attendance is marked
+  teacherStatus AttendanceStatus @default(NOT_SCHEDULED)
+  teacherNotes  String?
+  markedBy      String           // User ID who marked the attendance
+  markedAt      DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  studentAttendance StudentAttendance[]
+
+  @@unique([classId, date]) // One attendance record per class per date
+}
+
+model StudentAttendance {
+  id                String           @id @default(cuid())
+  classAttendanceId String
+  classAttendance   ClassAttendance  @relation(fields: [classAttendanceId], references: [id])
+  studentId         String
+  student           Student          @relation(fields: [studentId], references: [id])
+  status            AttendanceStatus @default(ABSENT)
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([classAttendanceId, studentId]) // One attendance record per student per class per date
 }

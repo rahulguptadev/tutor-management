@@ -10,6 +10,13 @@ const TABS = [
   { label: "Attendance", value: "attendance" },
 ];
 
+// Add attendance type options
+const ATTENDANCE_TYPES = [
+  { label: "All Attendance", value: "all" },
+  { label: "Student Attendance", value: "student" },
+  { label: "Teacher Attendance", value: "teacher" },
+]
+
 const DATE_OPTIONS = [
   { label: "All Time", value: "all" },
   { label: "Last 7 Days", value: "7d" },
@@ -59,6 +66,7 @@ export default function ReportsPage() {
   const [search, setSearch] = useState("");
   const [grade, setGrade] = useState("");
   const [subject, setSubject] = useState("");
+  const [attendanceType, setAttendanceType] = useState("all");
   const [data, setData] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -96,22 +104,33 @@ export default function ReportsPage() {
   }, [tab]);
 
   useEffect(() => {
-    setLoading(true);
-    setError("");
-    const params = new URLSearchParams({
-      status,
-      dateRange,
-      search: search,
-      ...(grade && { grade }),
-      ...(subject && { subject }),
-    });
-    
-    fetch(`/api/reports/${tab}?${params}`)
-      .then(res => res.ok ? res.json() : Promise.reject(res))
-      .then(setData)
-      .catch(() => setError("Failed to load data"))
-      .finally(() => setLoading(false));
-  }, [tab, status, dateRange, search, grade, subject]);
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams()
+        if (search) params.append("search", search)
+        if (status !== "all") params.append("status", status)
+        if (dateRange !== "all") params.append("dateRange", dateRange)
+        if (grade) params.append("grade", grade)
+        if (subject) params.append("subject", subject)
+        if (tab === "attendance" && attendanceType !== "all") {
+          params.append("attendanceType", attendanceType)
+        }
+
+        const response = await fetch(`/api/reports/${tab}?${params}`)
+        if (response.ok) {
+          const result = await response.json()
+          setData(result)
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [tab, search, status, dateRange, grade, subject, attendanceType])
 
   const handleFieldToggle = (fieldKey: string) => {
     setSelectedFields(prev => ({
@@ -271,95 +290,150 @@ export default function ReportsPage() {
   };
 
   const renderFilters = () => (
-    <div className="flex flex-wrap gap-4 items-end mb-6">
-      <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
-        <select
-          className="border rounded px-2 py-1"
-          value={status}
-          onChange={e => setStatus(e.target.value)}
-        >
-          <option value="all">All</option>
-          <option value="active">{tab === "students" ? "Enrolled" : "Active"}</option>
-          <option value="inactive">{tab === "students" ? "Not Enrolled" : "Inactive"}</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Date Range</label>
-        <select
-          className="border rounded px-2 py-1"
-          value={dateRange}
-          onChange={e => setDateRange(e.target.value)}
-        >
-          {DATE_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
-      {tab === "students" && (
-        <>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Grade</label>
-            <select
-              className="border rounded px-2 py-1"
-              value={grade}
-              onChange={e => setGrade(e.target.value)}
-            >
-              <option value="">All Grades</option>
-              {grades.map((g: any) => (
-                <option key={g.id} value={g.id}>{g.name} ({g.curriculum})</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Subject</label>
-            <select
-              className="border rounded px-2 py-1"
-              value={subject}
-              onChange={e => setSubject(e.target.value)}
-            >
-              <option value="">All Subjects</option>
-              {subjects.map((s: any) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-        </>
-      )}
-      {tab === "teachers" && (
+    <div className="bg-white p-4 rounded-lg shadow mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Subject</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Search
+          </label>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Date Range
+          </label>
           <select
-            className="border rounded px-2 py-1"
-            value={subject}
-            onChange={e => setSubject(e.target.value)}
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
-            <option value="">All Subjects</option>
-            {subjects.map((s: any) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
+            {DATE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </select>
         </div>
-      )}
-      <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
-        <input
-          type="text"
-          className="border rounded px-2 py-1"
-          placeholder="Search by name, email, etc."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Status
+          </label>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {tab === "students" ? (
+              <>
+                <option value="all">All Students</option>
+                <option value="active">Enrolled</option>
+                <option value="inactive">Not Enrolled</option>
+              </>
+            ) : tab === "teachers" ? (
+              <>
+                <option value="all">All Teachers</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </>
+            ) : tab === "attendance" ? (
+              <>
+                <option value="all">All Status</option>
+                <option value="PRESENT">Present</option>
+                <option value="ABSENT">Absent</option>
+                <option value="LATE">Late</option>
+                <option value="CANCELLED">Cancelled</option>
+              </>
+            ) : (
+              <>
+                <option value="all">All Status</option>
+                <option value="SCHEDULED">Scheduled</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
+              </>
+            )}
+          </select>
+        </div>
+
+        {tab === "students" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Grade
+            </label>
+            <select
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">All Grades</option>
+              {grades.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name} ({g.curriculum})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {(tab === "students" || tab === "teachers") && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Subject
+            </label>
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">All Subjects</option>
+              {subjects.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {tab === "attendance" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Attendance Type
+            </label>
+            <select
+              value={attendanceType}
+              onChange={(e) => setAttendanceType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {ATTENDANCE_TYPES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
-      <button
-        className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        onClick={e => { e.preventDefault(); handleExport(); }}
-        disabled={loading || data.length === 0}
-      >
-        Export
-      </button>
+      
+      <div className="mt-4 flex justify-end">
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={(e) => { e.preventDefault(); handleExport(); }}
+          disabled={loading || data.length === 0}
+        >
+          Export
+        </button>
+      </div>
     </div>
-  );
+  )
 
   const renderTable = () => {
     if (loading) return <div className="py-8 text-center text-gray-500">Loading...</div>;
@@ -546,32 +620,137 @@ export default function ReportsPage() {
         </div>
       );
     } else if (tab === "attendance") {
-      return (
-        <div className="overflow-x-auto bg-white rounded-xl shadow">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 sticky top-0 z-10">
-              <tr>
-                <th className="px-4 py-2 text-left w-16">S.No</th>
-                <th className="px-4 py-2 text-left">Date</th>
-                <th className="px-4 py-2 text-left">Students</th>
-                <th className="px-4 py-2 text-left">Teacher</th>
-                <th className="px-4 py-2 text-left">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((a: any, idx: number) => (
-                <tr key={a.id} className="hover:bg-blue-50 transition-colors">
-                  <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
-                  <td className="px-4 py-2">{a.startTime?.slice(0, 10)}</td>
-                  <td className="px-4 py-2">{a.students?.map((cs: any) => cs.student?.user?.name).join(", ") || '-'}</td>
-                  <td className="px-4 py-2">{a.teacher?.user?.name}</td>
-                  <td className="px-4 py-2">{a.status === "COMPLETED" ? "Present" : "Absent"}</td>
+      if (attendanceType === "student") {
+        // Student attendance view
+        return (
+          <div className="overflow-x-auto bg-white rounded-xl shadow">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-2 text-left w-16">S.No</th>
+                  <th className="px-4 py-2 text-left">Date</th>
+                  <th className="px-4 py-2 text-left">Student</th>
+                  <th className="px-4 py-2 text-left">Class</th>
+                  <th className="px-4 py-2 text-left">Subject</th>
+                  <th className="px-4 py-2 text-left">Status</th>
+                  <th className="px-4 py-2 text-left">Notes</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
+              </thead>
+              <tbody>
+                {data.flatMap((att: any, idx: number) => 
+                  att.studentAttendance?.map((sa: any, studentIdx: number) => (
+                    <tr key={`${att.id}-${sa.id}`} className="hover:bg-blue-50 transition-colors">
+                      <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx * 100 + studentIdx + 1}</td>
+                      <td className="px-4 py-2">{new Date(att.date).toLocaleDateString()}</td>
+                      <td className="px-4 py-2 font-medium">{sa.student.user.name}</td>
+                      <td className="px-4 py-2">{att.class?.subject?.name}</td>
+                      <td className="px-4 py-2">{att.class?.subject?.name}</td>
+                      <td className="px-4 py-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          sa.status === 'PRESENT' ? 'bg-green-100 text-green-800' :
+                          sa.status === 'ABSENT' ? 'bg-red-100 text-red-800' :
+                          sa.status === 'LATE' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {sa.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2">{sa.notes || '-'}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        );
+      } else if (attendanceType === "teacher") {
+        // Teacher attendance view
+        return (
+          <div className="overflow-x-auto bg-white rounded-xl shadow">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-2 text-left w-16">S.No</th>
+                  <th className="px-4 py-2 text-left">Date</th>
+                  <th className="px-4 py-2 text-left">Teacher</th>
+                  <th className="px-4 py-2 text-left">Class</th>
+                  <th className="px-4 py-2 text-left">Subject</th>
+                  <th className="px-4 py-2 text-left">Status</th>
+                  <th className="px-4 py-2 text-left">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((att: any, idx: number) => (
+                  <tr key={att.id} className="hover:bg-blue-50 transition-colors">
+                    <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
+                    <td className="px-4 py-2">{new Date(att.date).toLocaleDateString()}</td>
+                    <td className="px-4 py-2 font-medium">{att.class?.teacher?.user?.name}</td>
+                    <td className="px-4 py-2">{att.class?.subject?.name}</td>
+                    <td className="px-4 py-2">{att.class?.subject?.name}</td>
+                    <td className="px-4 py-2">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        att.teacherStatus === 'PRESENT' ? 'bg-green-100 text-green-800' :
+                        att.teacherStatus === 'ABSENT' ? 'bg-red-100 text-red-800' :
+                        att.teacherStatus === 'LATE' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {att.teacherStatus}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">{att.teacherNotes || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      } else {
+        // All attendance view (default)
+        return (
+          <div className="overflow-x-auto bg-white rounded-xl shadow">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-2 text-left w-16">S.No</th>
+                  <th className="px-4 py-2 text-left">Date</th>
+                  <th className="px-4 py-2 text-left">Class</th>
+                  <th className="px-4 py-2 text-left">Teacher</th>
+                  <th className="px-4 py-2 text-left">Teacher Status</th>
+                  <th className="px-4 py-2 text-left">Students Present</th>
+                  <th className="px-4 py-2 text-left">Total Students</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((a: any, idx: number) => {
+                  const presentStudents = a.studentAttendance?.filter((sa: any) => sa.status === 'PRESENT').length || 0;
+                  const totalStudents = a.studentAttendance?.length || 0;
+                  
+                  return (
+                    <tr key={a.id} className="hover:bg-blue-50 transition-colors">
+                      <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
+                      <td className="px-4 py-2">{new Date(a.date).toLocaleDateString()}</td>
+                      <td className="px-4 py-2">{a.class?.subject?.name}</td>
+                      <td className="px-4 py-2">{a.class?.teacher?.user?.name}</td>
+                      <td className="px-4 py-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          a.teacherStatus === 'PRESENT' ? 'bg-green-100 text-green-800' :
+                          a.teacherStatus === 'ABSENT' ? 'bg-red-100 text-red-800' :
+                          a.teacherStatus === 'LATE' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {a.teacherStatus}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 font-medium text-green-600">{presentStudents}</td>
+                      <td className="px-4 py-2">{totalStudents}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
     }
     return null;
   };

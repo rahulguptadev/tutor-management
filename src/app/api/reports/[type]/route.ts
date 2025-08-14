@@ -153,25 +153,61 @@ export async function GET(req: Request, context: { params: Promise<{ type: strin
       orderBy: { createdAt: 'desc' },
     })
   } else if (type === 'attendance') {
-    data = await prisma.class.findMany({
+    const attendanceType = searchParams.get('attendanceType')
+    
+    data = await prisma.classAttendance.findMany({
       where: {
         ...(search && {
-          OR: [
-            { students: { some: { student: { user: { name: { contains: search, mode: 'insensitive' } } } } } },
-            { teacher: { user: { name: { contains: search, mode: 'insensitive' } } } },
-          ],
+          class: {
+            OR: [
+              { students: { some: { student: { user: { name: { contains: search, mode: 'insensitive' } } } } } },
+              { teacher: { user: { name: { contains: search, mode: 'insensitive' } } } },
+            ],
+          },
         }),
-        ...(parseDateRange(dateRange) && { createdAt: parseDateRange(dateRange) }),
+        ...(parseDateRange(dateRange) && { date: parseDateRange(dateRange) }),
+        ...(status !== 'all' && attendanceType === 'teacher' && { teacherStatus: status }),
+        ...(status !== 'all' && attendanceType === 'student' && {
+          studentAttendance: {
+            some: {
+              status: status
+            }
+          }
+        }),
       },
       include: {
-        students: { 
-          include: { 
-            student: { include: { user: true } } 
-          } 
+        class: {
+          include: {
+            students: { 
+              include: { 
+                student: { 
+                  include: { 
+                    user: { select: { name: true, email: true } },
+                    grade: { select: { name: true, curriculum: true } }
+                  } 
+                } 
+              } 
+            },
+            teacher: { 
+              include: { 
+                user: { select: { name: true, email: true } } 
+              } 
+            },
+            subject: { select: { name: true } },
+          },
         },
-        teacher: { include: { user: true } },
+        studentAttendance: {
+          include: {
+            student: {
+              include: {
+                user: { select: { name: true, email: true } },
+                grade: { select: { name: true, curriculum: true } }
+              }
+            }
+          }
+        },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { date: 'desc' },
     })
   } else {
     return NextResponse.json({ error: 'Invalid report type' }, { status: 400 })
