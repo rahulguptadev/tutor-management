@@ -24,19 +24,25 @@ export function DeleteButton({
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      const response = await fetch(`/api/${entityType}s/${entityId}`, {
+      // Fix pluralization for 'class' -> 'classes'
+      const apiPath = entityType === 'class' ? 'classes' : `${entityType}s`
+      const response = await fetch(`/api/${apiPath}/${entityId}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
         setShowConfirm(false)
+        // Call the onDelete callback to refresh the parent component
         onDelete?.()
+        // Show success message
+        alert(`${entityType.charAt(0).toUpperCase() + entityType.slice(1)} deleted successfully!`)
       } else {
-        throw new Error('Failed to delete')
+        const errorText = await response.text()
+        throw new Error(`Failed to delete: ${errorText}`)
       }
     } catch (error) {
       console.error('Error deleting:', error)
-      alert('Failed to delete. Please try again.')
+      alert(`Failed to delete ${entityType}. Please try again.`)
     } finally {
       setIsDeleting(false)
     }

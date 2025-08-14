@@ -42,10 +42,24 @@ export default async function TeachersPage({ searchParams }: { searchParams?: Pr
     where.OR = [
       { user: { name: { contains: search, mode: 'insensitive' } } },
       { user: { email: { contains: search, mode: 'insensitive' } } },
-      { subjects: { has: search } },
+      { 
+        subjects: { 
+          some: { 
+            subject: { 
+              name: { contains: search, mode: 'insensitive' } 
+            } 
+          } 
+        } 
+      },
     ];
   }
-  if (subject) where.subjects = { has: subject };
+  if (subject) {
+    where.subjects = { 
+      some: { 
+        subject: { name: subject } 
+      } 
+    };
+  }
   if (minRate !== undefined) where.hourlyRate = { ...where.hourlyRate, gte: minRate };
   if (maxRate !== undefined) where.hourlyRate = { ...where.hourlyRate, lte: maxRate };
 

@@ -1,10 +1,10 @@
-import { getServerSession } from 'next-auth'
-import { redirect } from 'next/navigation'
-import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+'use client'
+
+import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { DeleteButton } from '@/components/DeleteButton'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 type Class = {
   id: string
@@ -27,42 +27,59 @@ type Class = {
   }
 }
 
-export default async function ClassesPage() {
-  const session = await getServerSession(authOptions)
+export default function ClassesPage() {
+  const router = useRouter()
+  const [classes, setClasses] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
-  if (!session) {
-    redirect('/auth/signin')
+  // Fetch classes data
+  const fetchClasses = async () => {
+    try {
+      setLoading(true)
+      setError('')
+      setSuccessMessage('')
+      const response = await fetch('/api/classes', {
+        credentials: 'include', // Include cookies for authentication
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setClasses(data)
+      } else if (response.status === 401) {
+        setError('Authentication required. Please sign in again.')
+        // Redirect to signin page
+        window.location.href = '/auth/signin'
+      } else {
+        setError(`Failed to fetch classes: ${response.status}`)
+      }
+    } catch (err) {
+      setError('Failed to fetch classes')
+      console.error('Error fetching classes:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const classes = await prisma.class.findMany({
-    where: { isActive: true },
-    include: {
-      teacher: {
-        include: {
-          user: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-      students: {
-        include: {
-          student: {
-            include: {
-              user: {
-                select: { name: true },
-              },
-            },
-          },
-        },
-      },
-      subject: true,
-    },
-    orderBy: {
-      startTime: 'desc',
-    },
-  })
+  // Initial data fetch
+  useEffect(() => {
+    fetchClasses()
+  }, [])
+
+  // Handle successful deletion
+  const handleDeleteSuccess = () => {
+    // Refresh the data immediately after deletion
+    fetchClasses()
+    // Also refresh the router to update any cached data
+    router.refresh()
+    // Show success message
+    setSuccessMessage('Class deleted successfully!')
+    // Clear success message after 3 seconds
+    setTimeout(() => setSuccessMessage(''), 3000)
+  }
 
   const getStatusColor = (status: Class['status']) => {
     switch (status) {
@@ -77,6 +94,39 @@ export default async function ClassesPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="p-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading classes...</p>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">{error}</p>
+            <button 
+              onClick={fetchClasses}
+              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
   return (
     <DashboardLayout>
       <div className="p-6">
@@ -85,14 +135,42 @@ export default async function ClassesPage() {
             <h1 className="text-2xl font-bold text-gray-900">Classes</h1>
             <p className="text-sm text-gray-600 mt-1">Manage class schedules and assignments</p>
           </div>
-          <Link
-            href="/classes/new"
-            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm transition-colors"
-          >
-            <span className="mr-2">+</span>
-            Add Class
-          </Link>
+          <div className="flex gap-3">
+            <button
+              onClick={fetchClasses}
+              disabled={loading}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                  Refreshing...
+                </>
+              ) : (
+                '↻ Refresh'
+              )}
+            </button>
+            <Link
+              href="/classes/new"
+              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm transition-colors"
+            >
+              <span className="mr-2">+</span>
+              Add Class
+            </Link>
+          </div>
         </div>
+        
+        {successMessage && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <p className="text-green-800">{successMessage}</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
         
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
           <table className="min-w-full divide-y divide-slate-200">
@@ -150,6 +228,7 @@ export default async function ClassesPage() {
                         entityType="class"
                         entityId={classItem.id}
                         entityName={`${classItem.subject?.name || 'Class'} with ${classItem.teacher.user.name}`}
+                        onDelete={handleDeleteSuccess}
                       />
                     </div>
                   </td>
