@@ -138,7 +138,7 @@ export async function PATCH(request: Request) {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.role || session.user.role !== 'ADMIN') {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return new NextResponse('Unauthorized', { status: 400 })
     }
 
     const body = await request.json()
@@ -180,13 +180,46 @@ export async function PATCH(request: Request) {
       return new NextResponse('Class not found', { status: 404 })
     }
 
-    const updatedClass = await prisma.class.update({
+    // Update class with teacher and student in a transaction
+    const updatedClass = await prisma.$transaction(async (tx) => {
+      // Update the main class data
+      const updatedClassData = await tx.class.update({
+        where: { id },
+        data: {
+          subjectId: data.subjectId,
+          teacherId: data.teacherId,
+          startTime: data.startTime ? new Date(data.startTime) : undefined,
+          endTime: data.endTime ? new Date(data.endTime) : undefined,
+          status: data.status,
+          notes: data.notes,
+          isRecurring: data.isRecurring,
+          recurrence: data.recurrence,
+          recurrenceEnd: data.recurrenceEnd ? new Date(data.recurrenceEnd) : undefined,
+        },
+      })
+
+      // Update student relationship if studentId changed
+      if (data.studentId && data.studentId !== existingClass.students[0]?.studentId) {
+        // Remove existing student relationships
+        await tx.classStudent.deleteMany({
+          where: { classId: id },
+        })
+
+        // Create new student relationship
+        await tx.classStudent.create({
+          data: {
+            classId: id,
+            studentId: data.studentId,
+          },
+        })
+      }
+
+      return updatedClassData
+    })
+
+    // Fetch the updated class with all relationships
+    const finalClass = await prisma.class.findUnique({
       where: { id },
-      data: {
-        ...data,
-        ...(data.startTime && { startTime: new Date(data.startTime) }),
-        ...(data.endTime && { endTime: new Date(data.endTime) }),
-      },
       include: {
         teacher: {
           include: {
@@ -218,14 +251,18 @@ export async function PATCH(request: Request) {
       },
     })
 
+    if (!finalClass) {
+      throw new Error('Failed to fetch updated class')
+    }
+
     // Log the activity
     await logActivity(
       'CLASS_UPDATED',
-      `Class (${updatedClass.subject.name}) updated for ${updatedClass.students[0]?.student.user.name} with teacher ${updatedClass.teacher.user.name}`,
+      `Class (${finalClass.subject.name}) updated for ${finalClass.students[0]?.student.user.name} with teacher ${finalClass.teacher.user.name}`,
       session.user.id
     )
 
-    return NextResponse.json(updatedClass)
+    return NextResponse.json(finalClass)
   } catch (error) {
     console.error('Failed to update class:', error)
     return new NextResponse('Internal Server Error', { status: 500 })

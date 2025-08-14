@@ -19,9 +19,12 @@ const ATTENDANCE_TYPES = [
 
 const DATE_OPTIONS = [
   { label: "All Time", value: "all" },
+  { label: "Today", value: "today" },
+  { label: "Tomorrow", value: "tomorrow" },
   { label: "Last 7 Days", value: "7d" },
   { label: "1 Month", value: "1m" },
   { label: "3 Months", value: "3m" },
+  { label: "Custom Range", value: "custom" },
 ];
 
 // Available fields for students
@@ -51,6 +54,21 @@ const TEACHER_FIELDS = [
   { key: 'status', label: 'Status', default: true },
 ];
 
+// Available fields for classes
+const CLASS_FIELDS = [
+  { key: 'subject', label: 'Subject', default: true },
+  { key: 'teacher', label: 'Teacher', default: true },
+  { key: 'students', label: 'Students', default: true },
+  { key: 'startTime', label: 'Start Time', default: true },
+  { key: 'endTime', label: 'End Time', default: true },
+  { key: 'duration', label: 'Duration', default: true },
+  { key: 'status', label: 'Status', default: true },
+  { key: 'isRecurring', label: 'Recurring', default: false },
+  { key: 'recurrence', label: 'Recurrence Pattern', default: false },
+  { key: 'notes', label: 'Notes', default: false },
+  { key: 'createdAt', label: 'Created Date', default: false },
+];
+
 function toCSV(rows: any[], headers: string[]) {
   const csvRows = [headers.join(",")];
   for (const row of rows) {
@@ -66,10 +84,16 @@ export default function ReportsPage() {
   const [search, setSearch] = useState("");
   const [grade, setGrade] = useState("");
   const [subject, setSubject] = useState("");
+  const [teacher, setTeacher] = useState("");
+  const [student, setStudent] = useState("");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [attendanceType, setAttendanceType] = useState("all");
   const [data, setData] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
@@ -79,7 +103,17 @@ export default function ReportsPage() {
 
   // Initialize selected fields based on tab
   useEffect(() => {
-    const fields = tab === "students" ? STUDENT_FIELDS : TEACHER_FIELDS;
+    let fields: typeof STUDENT_FIELDS | typeof TEACHER_FIELDS | typeof CLASS_FIELDS;
+    if (tab === "students") {
+      fields = STUDENT_FIELDS;
+    } else if (tab === "teachers") {
+      fields = TEACHER_FIELDS;
+    } else if (tab === "classes") {
+      fields = CLASS_FIELDS;
+    } else {
+      fields = [];
+    }
+    
     const initialFields: {[key: string]: boolean} = {};
     fields.forEach(field => {
       initialFields[field.key] = field.default;
@@ -87,18 +121,24 @@ export default function ReportsPage() {
     setSelectedFields(initialFields);
   }, [tab]);
 
-  // Fetch grades and subjects for filters
+  // Fetch grades, subjects, teachers, and students for filters
   useEffect(() => {
-    if (tab === "students" || tab === "teachers") {
+    if (tab === "students" || tab === "teachers" || tab === "classes") {
       Promise.all([
         fetch('/api/grades').then(res => res.ok ? res.json() : []),
-        fetch('/api/subjects').then(res => res.ok ? res.json() : [])
-      ]).then(([gradesData, subjectsData]) => {
+        fetch('/api/subjects').then(res => res.ok ? res.json() : []),
+        fetch('/api/teachers').then(res => res.ok ? res.json() : []),
+        fetch('/api/students').then(res => res.ok ? res.json() : [])
+      ]).then(([gradesData, subjectsData, teachersData, studentsData]) => {
         setGrades(gradesData);
         setSubjects(subjectsData);
+        setTeachers(teachersData);
+        setStudents(studentsData);
       }).catch(() => {
         setGrades([]);
         setSubjects([]);
+        setTeachers([]);
+        setStudents([]);
       });
     }
   }, [tab]);
@@ -113,6 +153,12 @@ export default function ReportsPage() {
         if (dateRange !== "all") params.append("dateRange", dateRange)
         if (grade) params.append("grade", grade)
         if (subject) params.append("subject", subject)
+        if (teacher) params.append("teacher", teacher)
+        if (student) params.append("student", student)
+        if (dateRange === "custom") {
+          if (customStartDate) params.append("customStartDate", customStartDate)
+          if (customEndDate) params.append("customEndDate", customEndDate)
+        }
         if (tab === "attendance" && attendanceType !== "all") {
           params.append("attendanceType", attendanceType)
         }
@@ -130,7 +176,7 @@ export default function ReportsPage() {
     }
 
     fetchData()
-  }, [tab, search, status, dateRange, grade, subject, attendanceType])
+  }, [tab, search, status, dateRange, grade, subject, teacher, student, customStartDate, customEndDate, attendanceType])
 
   const handleFieldToggle = (fieldKey: string) => {
     setSelectedFields(prev => ({
@@ -224,13 +270,51 @@ export default function ReportsPage() {
         return row;
       });
     } else if (tab === "classes") {
-      headers = ["class", "teacher", "students", "status"];
-      rows = data.map((c: any) => ({
-        class: c.subject?.name,
-        teacher: c.teacher?.user?.name,
-        students: c.students?.map((cs: any) => cs.student?.user?.name).join("; ") || '-',
-        status: c.status,
-      }));
+      const fields = CLASS_FIELDS.filter(field => selectedFields[field.key]);
+      headers = activeFields.map(field => field.label);
+      rows = data.map((c: any) => {
+        const row: any = {};
+        activeFields.forEach(field => {
+          switch (field.key) {
+            case 'subject':
+              row[field.label] = c.subject?.name || '-';
+              break;
+            case 'teacher':
+              row[field.label] = c.teacher?.user?.name || '-';
+              break;
+            case 'students':
+              row[field.label] = c.students?.map((cs: any) => cs.student?.user?.name).join("; ") || '-';
+              break;
+            case 'startTime':
+              row[field.label] = c.startTime ? new Date(c.startTime).toLocaleString() : '-';
+              break;
+            case 'endTime':
+              row[field.label] = c.endTime ? new Date(c.endTime).toLocaleString() : '-';
+              break;
+            case 'duration':
+              const duration = c.startTime && c.endTime ? 
+                Math.round((new Date(c.endTime).getTime() - new Date(c.startTime).getTime()) / (1000 * 60)) : 0;
+              row[field.label] = `${duration} minutes`;
+              break;
+            case 'status':
+              row[field.label] = c.status || '-';
+              break;
+            case 'isRecurring':
+              row[field.label] = c.isRecurring ? 'Yes' : 'No';
+              break;
+            case 'recurrence':
+              row[field.label] = c.recurrence || '-';
+              break;
+            case 'notes':
+              row[field.label] = c.notes || '-';
+              break;
+            case 'createdAt':
+              row[field.label] = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-';
+              break;
+          }
+        });
+        return row;
+      });
     } else if (tab === "attendance") {
       headers = ["date", "students", "teacher", "status"];
       rows = data.map((a: any) => ({
@@ -254,9 +338,16 @@ export default function ReportsPage() {
   };
 
   const renderFieldSelector = () => {
-    if (tab !== "students" && tab !== "teachers") return null;
+    if (tab !== "students" && tab !== "teachers" && tab !== "classes") return null;
     
-    const fields = tab === "students" ? STUDENT_FIELDS : TEACHER_FIELDS;
+    let fields;
+    if (tab === "students") {
+      fields = STUDENT_FIELDS;
+    } else if (tab === "teachers") {
+      fields = TEACHER_FIELDS;
+    } else {
+      fields = CLASS_FIELDS;
+    }
     
     return (
       <div className="mb-4">
@@ -403,6 +494,92 @@ export default function ReportsPage() {
           </div>
         )}
 
+        {tab === "classes" && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Subject
+              </label>
+              <select
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">All Subjects</option>
+                {subjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Teacher
+              </label>
+              <select
+                value={teacher}
+                onChange={(e) => setTeacher(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">All Teachers</option>
+                {teachers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.user?.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Student
+              </label>
+              <select
+                value={student}
+                onChange={(e) => setStudent(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">All Students</option>
+                {students.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.user?.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
+
+        {tab === "classes" && dateRange === "custom" && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </>
+        )}
+
         {tab === "attendance" && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -423,7 +600,25 @@ export default function ReportsPage() {
         )}
       </div>
       
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex justify-between items-center">
+        <button
+          onClick={() => {
+            setSearch("");
+            setStatus("all");
+            setDateRange("all");
+            setGrade("");
+            setSubject("");
+            setTeacher("");
+            setStudent("");
+            setCustomStartDate("");
+            setCustomEndDate("");
+            setAttendanceType("all");
+          }}
+          className="text-gray-600 hover:text-gray-800 text-sm font-medium"
+        >
+          Reset Filters
+        </button>
+        
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={(e) => { e.preventDefault(); handleExport(); }}
@@ -593,26 +788,69 @@ export default function ReportsPage() {
         </div>
       );
     } else if (tab === "classes") {
+      const fields = CLASS_FIELDS.filter(field => selectedFields[field.key]);
       return (
         <div className="overflow-x-auto bg-white rounded-xl shadow">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-2 text-left w-16">S.No</th>
-                <th className="px-4 py-2 text-left">Class</th>
-                <th className="px-4 py-2 text-left">Teacher</th>
-                <th className="px-4 py-2 text-left">Students</th>
-                <th className="px-4 py-2 text-left">Status</th>
+                {fields.map(field => (
+                  <th key={field.key} className="px-4 py-2 text-left">{field.label}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {data.map((c: any, idx: number) => (
                 <tr key={c.id} className="hover:bg-blue-50 transition-colors">
                   <td className="px-4 py-2 font-mono text-xs text-gray-500">{idx + 1}</td>
-                  <td className="px-4 py-2">{c.subject?.name}</td>
-                  <td className="px-4 py-2">{c.teacher?.user?.name}</td>
-                  <td className="px-4 py-2">{c.students?.map((cs: any) => cs.student?.user?.name).join(", ") || '-'}</td>
-                  <td className="px-4 py-2">{c.status}</td>
+                  {fields.map(field => {
+                    switch (field.key) {
+                      case 'subject':
+                        return <td key={field.key} className="px-4 py-2">{c.subject?.name || '-'}</td>;
+                      case 'teacher':
+                        return <td key={field.key} className="px-4 py-2">{c.teacher?.user?.name || '-'}</td>;
+                      case 'students':
+                        return (
+                          <td key={field.key} className="px-4 py-2">
+                            {c.students?.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {c.students.map((cs: any, index: number) => (
+                                  <span
+                                    key={cs.student?.user?.name ?? index}
+                                    className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                                  >
+                                    {cs.student?.user?.name ?? 'Unknown'}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">No students</span>
+                            )}
+                          </td>
+                        );
+                      case 'startTime':
+                        return <td key={field.key} className="px-4 py-2">{c.startTime ? new Date(c.startTime).toLocaleString() : '-'}</td>;
+                      case 'endTime':
+                        return <td key={field.key} className="px-4 py-2">{c.endTime ? new Date(c.endTime).toLocaleString() : '-'}</td>;
+                      case 'duration':
+                        const duration = c.startTime && c.endTime ? 
+                          Math.round((new Date(c.endTime).getTime() - new Date(c.startTime).getTime()) / (1000 * 60)) : 0;
+                        return <td key={field.key} className="px-4 py-2">{`${duration} minutes`}</td>;
+                      case 'status':
+                        return <td key={field.key} className="px-4 py-2">{c.status || '-'}</td>;
+                      case 'isRecurring':
+                        return <td key={field.key} className="px-4 py-2">{c.isRecurring ? 'Yes' : 'No'}</td>;
+                      case 'recurrence':
+                        return <td key={field.key} className="px-4 py-2">{c.recurrence || '-'}</td>;
+                      case 'notes':
+                        return <td key={field.key} className="px-4 py-2">{c.notes || '-'}</td>;
+                      case 'createdAt':
+                        return <td key={field.key} className="px-4 py-2">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '-'}</td>;
+                      default:
+                        return <td key={field.key} className="px-4 py-2">-</td>;
+                    }
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -776,6 +1014,35 @@ export default function ReportsPage() {
         </div>
         {renderFieldSelector()}
         {renderFilters()}
+        
+        {/* Results Summary */}
+        <div className="bg-white p-4 rounded-lg shadow mb-4">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              {loading ? (
+                <span>Loading...</span>
+              ) : (
+                <span>
+                  Showing <span className="font-semibold">{data.length}</span> results
+                  {tab === "classes" && (
+                    <>
+                      {subject && ` for subject: ${subjects.find(s => s.id === subject)?.name}`}
+                      {teacher && ` with teacher: ${teachers.find(t => t.id === teacher)?.user?.name}`}
+                      {student && ` for student: ${students.find(s => s.id === student)?.user?.name}`}
+                      {dateRange !== "all" && ` in ${DATE_OPTIONS.find(d => d.value === dateRange)?.label.toLowerCase()}`}
+                    </>
+                  )}
+                </span>
+              )}
+            </div>
+            {data.length > 0 && (
+              <div className="text-sm text-gray-500">
+                Last updated: {new Date().toLocaleTimeString()}
+              </div>
+            )}
+          </div>
+        </div>
+        
         {renderTable()}
       </div>
     </DashboardLayout>

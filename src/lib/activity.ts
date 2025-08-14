@@ -1,8 +1,8 @@
 import { prisma } from './prisma'
-import type { Activity } from '../generated/prisma'
+import { ActivityType } from '@prisma/client'
 
 export async function logActivity(
-  type: Activity['type'],
+  type: ActivityType,
   description: string,
   userId: string
 ) {
