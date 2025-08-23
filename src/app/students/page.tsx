@@ -172,7 +172,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
           </form>
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
           <table className="w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>

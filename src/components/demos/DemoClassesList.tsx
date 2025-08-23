@@ -139,7 +139,7 @@ export function DemoClassesList() {
       </div>
 
       {/* Demo Classes Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden border border-slate-200">
+      <div className="bg-white shadow rounded-lg overflow-x-auto border border-slate-200">
         <div className="px-6 py-4 border-b border-slate-200">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Demo Classes</h3>

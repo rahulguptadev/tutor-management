@@ -57,8 +57,8 @@ export default async function GradesPage() {
             </Link>
         </div>
 
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="w-full divide-y divide-slate-200">
+        <div className="bg-white shadow rounded-lg overflow-x-auto">
+          <table className="w-full divide-y divide-gray-200">
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
