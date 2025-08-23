@@ -195,6 +195,7 @@ model Class {
   endTime       DateTime
   status        String    // SCHEDULED, COMPLETED, CANCELLED
   notes         String?
+  schedule      Json?     // Store weekly schedule as JSON: [{day: "monday", start: "14:00", end: "15:00"}]
   isRecurring   Boolean   @default(false)
   recurrence    RecurrenceType?
   recurrenceEnd DateTime?

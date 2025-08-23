@@ -55,6 +55,7 @@ export function EditClassForm({ classId }: EditClassFormProps) {
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [students, setStudents] = useState<Student[]>([])
   const [subjects, setSubjects] = useState<Subject[]>([])
+  const [scheduleData, setScheduleData] = useState<any[]>([])
 
   const {
     register,
@@ -86,8 +87,8 @@ export function EditClassForm({ classId }: EditClassFormProps) {
         const [classData, teachersData, studentsData, subjectsData] = await Promise.all([
           classRes.json(),
           teachersRes.json(),
-          studentsRes.json(),
           subjectsRes.json(),
+          studentsRes.json(),
         ])
 
         console.log('Fetched class data:', classData)
@@ -95,33 +96,37 @@ export function EditClassForm({ classId }: EditClassFormProps) {
         console.log('Fetched students:', studentsData)
         console.log('Fetched subjects:', subjectsData)
 
-        setTeachers(teachersData)
-        setStudents(studentsData)
-        setSubjects(subjectsData)
+        // Ensure data is in correct format before setting state
+        setTeachers(Array.isArray(teachersData) ? teachersData : [])
+        setStudents(Array.isArray(studentsData) ? studentsData : [])
+        setSubjects(Array.isArray(subjectsData) ? subjectsData : [])
 
-        // Get the first student from the students array (assuming single student for now)
-        const firstStudent = classData.students?.[0]?.student
+        // Extract schedule data if it exists
+        if (classData.schedule && Array.isArray(classData.schedule)) {
+          setScheduleData(classData.schedule)
+        } else {
+          setScheduleData([])
+        }
 
-        // Format class data for the form
-        const formData = {
+        // Format the data for the form
+        const formattedData: ClassFormData = {
           subjectId: classData.subjectId,
           teacherId: classData.teacherId,
-          studentId: firstStudent?.id || '',
-          startTime: new Date(classData.startTime).toISOString().slice(0, 16),
-          endTime: new Date(classData.endTime).toISOString().slice(0, 16),
+          studentId: classData.students?.[0]?.student?.id || '',
+          startTime: classData.startTime ? new Date(classData.startTime).toISOString().slice(0, 16) : '',
+          endTime: classData.endTime ? new Date(classData.endTime).toISOString().slice(0, 16) : '',
           status: classData.status,
-          isRecurring: classData.isRecurring,
+          isRecurring: classData.isRecurring || false,
           recurrence: classData.recurrence || undefined,
-          recurrenceEnd: classData.recurrenceEnd ? new Date(classData.recurrenceEnd).toISOString().slice(0, 16) : undefined,
+          recurrenceEnd: classData.recurrenceEnd ? new Date(classData.recurrenceEnd).toISOString().slice(0, 16) : '',
           notes: classData.notes || '',
         }
 
-        console.log('Formatted form data:', formData)
-        setInitialData(formData)
-        reset(formData)
+        console.log('Formatted form data:', formattedData)
+        setInitialData(formattedData)
+        reset(formattedData)
       } catch (error) {
         console.error('Error fetching data:', error)
-        setError('Failed to load class details')
       }
     }
 
@@ -133,13 +138,35 @@ export function EditClassForm({ classId }: EditClassFormProps) {
     setLoading(true)
 
     try {
+      // Collect schedule data from the form inputs
+      const scheduleInputs = document.querySelectorAll('input[type="time"]')
+      const newScheduleData: any[] = []
+      
+      for (let i = 0; i < scheduleInputs.length; i += 2) {
+        const dayIndex = Math.floor(i / 2)
+        const day = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][dayIndex]
+        const startTime = (scheduleInputs[i] as HTMLInputElement).value
+        const endTime = (scheduleInputs[i + 1] as HTMLInputElement).value
+        
+        if (startTime && endTime) {
+          newScheduleData.push({
+            day,
+            start: startTime,
+            end: endTime
+          })
+        }
+      }
+
+      console.log('Collected schedule data:', newScheduleData)
       console.log('Submitting form data:', data)
+      
       const response = await fetch('/api/classes', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: classId,
           ...data,
+          schedule: newScheduleData,
         }),
       })
 
@@ -263,7 +290,7 @@ export function EditClassForm({ classId }: EditClassFormProps) {
                     <option value="">Select a teacher</option>
                     {teachers.map(teacher => (
                       <option key={teacher.id} value={teacher.id}>
-                        {teacher.user.name}
+                        {teacher.user?.name || 'Unknown Teacher'}
                       </option>
                     ))}
                   </select>
@@ -280,7 +307,7 @@ export function EditClassForm({ classId }: EditClassFormProps) {
                     <option value="">Select a student</option>
                     {students.map(student => (
                       <option key={student.id} value={student.id}>
-                        {student.user.name}
+                        {student.user?.name || 'Unknown Student'}
                       </option>
                     ))}
                   </select>
@@ -319,6 +346,38 @@ export function EditClassForm({ classId }: EditClassFormProps) {
                     {...register('endTime')}
                     className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   />
+                </div>
+              </div>
+
+              {/* Weekly Schedule */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Weekly Schedule
+                </label>
+                <div className="space-y-3">
+                  {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                    const existingSchedule = scheduleData.find(s => s.day === day)
+                    return (
+                      <div key={day} className="flex items-center space-x-3">
+                        <div className="w-24">
+                          <span className="text-sm font-medium text-gray-700 capitalize">{day}</span>
+                        </div>
+                        <input
+                          type="time"
+                          className="border rounded px-3 py-2 text-sm"
+                          placeholder="Start time"
+                          defaultValue={existingSchedule?.start || ''}
+                        />
+                        <span className="text-gray-500">to</span>
+                        <input
+                          type="time"
+                          className="border rounded px-3 py-2 text-sm"
+                          placeholder="End time"
+                          defaultValue={existingSchedule?.end || ''}
+                        />
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 

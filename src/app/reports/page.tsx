@@ -640,7 +640,7 @@ export default function ReportsPage() {
       
       return (
         <div className="overflow-x-auto bg-white rounded-xl shadow">
-          <table className="min-w-full text-sm">
+          <table className="w-full text-sm">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-2 text-left w-16">S.No</th>
@@ -719,7 +719,7 @@ export default function ReportsPage() {
       
       return (
         <div className="overflow-x-auto bg-white rounded-xl shadow">
-          <table className="min-w-full text-sm">
+          <table className="w-full text-sm">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-2 text-left w-16">S.No</th>
@@ -791,7 +791,7 @@ export default function ReportsPage() {
       const fields = CLASS_FIELDS.filter(field => selectedFields[field.key]);
       return (
         <div className="overflow-x-auto bg-white rounded-xl shadow">
-          <table className="min-w-full text-sm">
+          <table className="w-full text-sm">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-2 text-left w-16">S.No</th>
@@ -862,7 +862,7 @@ export default function ReportsPage() {
         // Student attendance view
         return (
           <div className="overflow-x-auto bg-white rounded-xl shadow">
-            <table className="min-w-full text-sm">
+            <table className="w-full text-sm">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-2 text-left w-16">S.No</th>
@@ -905,7 +905,7 @@ export default function ReportsPage() {
         // Teacher attendance view
         return (
           <div className="overflow-x-auto bg-white rounded-xl shadow">
-            <table className="min-w-full text-sm">
+            <table className="w-full text-sm">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-2 text-left w-16">S.No</th>
@@ -946,7 +946,7 @@ export default function ReportsPage() {
         // All attendance view (default)
         return (
           <div className="overflow-x-auto bg-white rounded-xl shadow">
-            <table className="min-w-full text-sm">
+            <table className="w-full text-sm">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-2 text-left w-16">S.No</th>

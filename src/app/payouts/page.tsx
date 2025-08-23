@@ -71,7 +71,7 @@ export default async function PayoutsPage() {
         </div>
         <div className="overflow-x-auto">
           <div className="bg-white rounded-xl shadow">
-            <table className="min-w-full divide-y divide-blue-200">
+            <table className="w-full divide-y divide-blue-200">
               <thead className="bg-blue-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">#</th>

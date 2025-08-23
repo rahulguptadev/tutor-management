@@ -18,9 +18,11 @@ const classSchema = z.object({
   studentIds: z.array(z.string()).min(1, 'At least one student is required'),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
-  schedule: z.string().min(1, 'Schedule is required'),
   fee: z.string().min(1, 'Fee is required'),
   status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED']),
+  isRecurring: z.boolean(),
+  recurrence: z.enum(['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY']).optional(),
+  recurrenceEnd: z.string().optional(),
 })
 
 type ClassFormData = z.infer<typeof classSchema>
@@ -72,13 +74,14 @@ export default function NewClassPage() {
     defaultValues: {
       status: 'SCHEDULED',
       studentIds: [],
+      isRecurring: false,
     },
   })
 
   const watchSubjectId = watch('subjectId')
 
+  // Initial data fetch
   useEffect(() => {
-    // Fetch teachers, students, and subjects
     const fetchData = async () => {
       try {
         const [teachersRes, studentsRes, subjectsRes] = await Promise.all([
@@ -108,40 +111,36 @@ export default function NewClassPage() {
     fetchData()
   }, [])
 
-  useEffect(() => {
-    // Update available subjects when teacher changes
-    if (watchSubjectId) {
-      const teacher = teachers.find(t => t.id === watchSubjectId)
-      setSelectedTeacher(teacher || null)
-    }
-  }, [watchSubjectId, teachers])
-
-  // Helper to update schedule in react-hook-form when scheduleRows change
-  useEffect(() => {
-    // Build schedule object
-    const scheduleObj: Record<string, string> = {}
-    scheduleRows.forEach(row => {
-      if (row.day && row.start && row.end) {
-        scheduleObj[row.day] = `${row.start}-${row.end}`
-      }
-    })
-    setValue('schedule', JSON.stringify(scheduleObj), { shouldValidate: true })
-  }, [scheduleRows, setValue])
+  // Handle successful deletion
+  const handleDeleteSuccess = () => {
+    // This function is no longer needed as schedule is handled by state
+  }
 
   async function onSubmit(data: ClassFormData) {
     setError('')
     setLoading(true)
 
     try {
+      // Validate that schedule rows have all required data
+      const validScheduleRows = scheduleRows.filter(row => row.day && row.start && row.end)
+      if (validScheduleRows.length === 0) {
+        setError('Please add at least one valid schedule entry with day, start time, and end time')
+        setLoading(false)
+        return
+      }
+
       const response = await fetch('/api/classes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
           fee: parseFloat(data.fee),
-          schedule: JSON.parse(data.schedule),
+          schedule: validScheduleRows, // Send schedule as structured data
           startTime: new Date(data.startDate).toISOString(),
           endTime: new Date(data.endDate).toISOString(),
+          isRecurring: data.isRecurring,
+          recurrence: data.isRecurring ? data.recurrence : undefined,
+          recurrenceEnd: data.isRecurring && data.recurrenceEnd ? new Date(data.recurrenceEnd).toISOString() : undefined,
         }),
       })
 
@@ -346,8 +345,55 @@ export default function NewClassPage() {
                 + Add Row
               </button>
             </div>
-            {errors.schedule && (
-              <p className="mt-1 text-sm text-red-600">{errors.schedule.message}</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isRecurring"
+                {...register('isRecurring')}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="isRecurring" className="ml-2 block text-sm font-medium text-gray-700">
+                This is a recurring class
+              </label>
+            </div>
+
+            {watch('isRecurring') && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Recurrence Type
+                  </label>
+                  <select
+                    {...register('recurrence')}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  >
+                    <option value="">Select recurrence type</option>
+                    <option value="DAILY">Daily</option>
+                    <option value="WEEKLY">Weekly</option>
+                    <option value="BIWEEKLY">Bi-weekly</option>
+                    <option value="MONTHLY">Monthly</option>
+                  </select>
+                  {errors.recurrence && (
+                    <p className="mt-1 text-sm text-red-600">{errors.recurrence.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Recurrence End Date
+                  </label>
+                  <input
+                    type="date"
+                    {...register('recurrenceEnd')}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  />
+                  {errors.recurrenceEnd && (
+                    <p className="mt-1 text-sm text-red-600">{errors.recurrenceEnd.message}</p>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 

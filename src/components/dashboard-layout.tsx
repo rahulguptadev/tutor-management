@@ -53,7 +53,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex">
+    <div className="min-h-screen bg-slate-100 flex overflow-hidden">
       {/* Mobile Hamburger */}
       <button
         className="fixed top-4 left-4 z-30 md:hidden p-2 rounded bg-white shadow"
@@ -63,15 +63,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <FiMenu size={24} />
       </button>
       {/* Sidebar Navigation */}
-              <aside
-          className={`fixed md:relative z-20 top-0 left-0 h-full w-64 bg-slate-800 shadow-lg flex flex-col justify-between transform transition-transform duration-200 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
-        >
-          <div>
-            <div className="flex items-center h-16 px-6 border-b border-slate-700">
-              <span className="text-lg font-bold text-white">Anita Scholar Academy</span>
-            </div>
-            <div className="px-4 py-6">
+      <aside
+        className={`fixed md:relative z-20 top-0 left-0 h-full w-64 bg-slate-800 shadow-lg flex flex-col justify-between transform transition-transform duration-200 ease-in-out flex-shrink-0
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+      >
+        <div>
+          <div className="flex items-center h-16 px-6 border-b border-slate-700">
+            <span className="text-lg font-bold text-white">Anita Scholar Academy</span>
+          </div>
+          <div className="px-4 py-6">
             <div className="mb-6">
               <span className="block text-sm text-slate-300 mb-1">Signed in as</span>
               <span className="block text-base font-medium text-white">{session?.user?.name}</span>
@@ -121,12 +121,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </aside>
-              {/* Main Content */}
-        <main className="flex-1 bg-slate-50 min-h-screen">
-          <div className="w-full h-full">
-            {children}
-          </div>
-        </main>
+      {/* Main Content */}
+      <main className="flex-1 bg-slate-50 min-h-screen overflow-x-auto overflow-y-auto">
+        <div className="w-full h-full">
+          {children}
+        </div>
+      </main>
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div

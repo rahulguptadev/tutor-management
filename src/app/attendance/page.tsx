@@ -28,13 +28,9 @@ export default async function AttendancePage({ searchParams }: PageProps) {
   })
 
   // Get classes scheduled for the selected date
-  const scheduledClasses = await prisma.class.findMany({
+  const allClasses = await prisma.class.findMany({
     where: {
       isActive: true,
-      startTime: {
-        gte: new Date(selectedDate.setHours(0, 0, 0, 0)),
-        lt: new Date(selectedDate.setHours(23, 59, 59, 999)),
-      },
     },
     include: {
       teacher: {
@@ -94,6 +90,65 @@ export default async function AttendancePage({ searchParams }: PageProps) {
       startTime: 'asc',
     },
   })
+
+  // Filter classes that should occur on the selected date
+  const scheduledClasses = allClasses.filter(classItem => {
+    const selectedDayOfWeek = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+    
+    // Check if it's a one-time class on this exact date
+    if (!classItem.isRecurring) {
+      const classDate = new Date(classItem.startTime)
+      return classDate.toDateString() === selectedDate.toDateString()
+    }
+    
+    // Check if it's a recurring class that should occur on this day
+    if (classItem.isRecurring && (classItem as any).schedule && Array.isArray((classItem as any).schedule)) {
+      const hasScheduleForDay = (classItem as any).schedule.some((scheduleItem: any) => 
+        scheduleItem.day === selectedDayOfWeek
+      )
+      
+      if (!hasScheduleForDay) return false
+      
+      // Check if the recurring class hasn't ended
+      if (classItem.recurrenceEnd) {
+        const endDate = new Date(classItem.recurrenceEnd)
+        if (selectedDate > endDate) return false
+      }
+      
+      // For bi-weekly classes, check if this week should have the class
+      if (classItem.recurrence === 'BIWEEKLY') {
+        const startDate = new Date(classItem.startTime)
+        const weeksDiff = Math.floor((selectedDate.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
+        if (weeksDiff % 2 !== 0) return false
+      }
+      
+      // For monthly classes, check if this month should have the class
+      if (classItem.recurrence === 'MONTHLY') {
+        const startDate = new Date(classItem.startTime)
+        const monthsDiff = (selectedDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                          (selectedDate.getMonth() - startDate.getMonth())
+        if (monthsDiff % 1 !== 0) return false
+      }
+      
+      return true
+    }
+    
+    return false
+  })
+
+  // Debug logging
+  console.log('Selected date:', selectedDate.toDateString())
+  console.log('Selected day of week:', selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase())
+  console.log('All classes count:', allClasses.length)
+  console.log('Recurring classes:', allClasses.filter(c => c.isRecurring).map(c => ({
+    id: c.id,
+    subject: c.subject?.name,
+    isRecurring: c.isRecurring,
+    recurrence: c.recurrence,
+    schedule: (c as any).schedule,
+    startTime: c.startTime
+  })))
+  console.log('Scheduled classes count:', scheduledClasses.length)
 
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleTimeString('en-US', {

@@ -21,6 +21,7 @@ export async function POST(req: Request) {
       endTime,
       status,
       notes,
+      schedule,
       isRecurring,
       recurrence,
       recurrenceEnd,
@@ -36,6 +37,7 @@ export async function POST(req: Request) {
           endTime: new Date(endTime),
           status,
           notes,
+          schedule,
           isRecurring,
           recurrence,
           recurrenceEnd: recurrenceEnd ? new Date(recurrenceEnd) : undefined,
@@ -101,9 +103,7 @@ export async function GET() {
         teacher: {
           include: {
             user: {
-              select: {
-                name: true,
-              },
+              select: { name: true },
             },
           },
         },
@@ -196,6 +196,7 @@ export async function PATCH(request: Request) {
           endTime: data.endTime ? new Date(data.endTime) : undefined,
           status: data.status,
           notes: data.notes,
+          schedule: data.schedule,
           isRecurring: data.isRecurring,
           recurrence: data.recurrence,
           recurrenceEnd: data.recurrenceEnd ? new Date(data.recurrenceEnd) : undefined,

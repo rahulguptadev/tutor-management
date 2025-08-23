@@ -60,7 +60,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           <h3 className="text-lg font-semibold mb-2">Enrolled Subjects</h3>
           {student.enrolledSubjects.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 bg-gray-50 rounded">
+              <table className="w-full divide-y divide-gray-200 bg-gray-50 rounded">
                 <thead>
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
@@ -87,7 +87,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Classes</h2>
         <div className="overflow-x-auto bg-white rounded shadow">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
@@ -121,7 +121,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
       <div>
         <h2 className="text-xl font-semibold mb-2">Fees</h2>
         <div className="overflow-x-auto bg-white rounded shadow">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>

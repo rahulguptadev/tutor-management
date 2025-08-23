@@ -46,7 +46,7 @@ export default async function SubjectsPage() {
         </div>
 
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-slate-200">
+          <table className="w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
