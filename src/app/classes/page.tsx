@@ -48,6 +48,8 @@ export default function ClassesPage() {
       })
       if (response.ok) {
         const data = await response.json()
+        console.log('Classes data received:', data)
+        console.log('First class subject:', data[0]?.subject)
         setClasses(data)
       } else if (response.status === 401) {
         setError('Authentication required. Please sign in again.')
@@ -177,13 +179,11 @@ export default function ClassesPage() {
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teacher</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -191,7 +191,6 @@ export default function ClassesPage() {
               {classes.map((classItem: any, idx: number) => (
                 <tr key={classItem.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{idx + 1}</td>
-                  <td className="px-6 py-3 whitespace-nowrap font-medium text-gray-900">{classItem.name}</td>
                   <td className="px-6 py-3 whitespace-nowrap text-gray-700">
                     {classItem.subject?.name || '-'}
                   </td>
@@ -209,7 +208,6 @@ export default function ClassesPage() {
                       {classItem.status.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-gray-700">${classItem.fee}</td>
                   <td className="px-6 py-3 whitespace-nowrap">
                     <div className="flex items-center space-x-3">
                       <Link
@@ -236,7 +234,7 @@ export default function ClassesPage() {
               ))}
               {classes.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-6 py-3 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-3 text-center text-gray-500">
                     No classes found.
                   </td>
                 </tr>

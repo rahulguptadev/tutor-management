@@ -112,17 +112,21 @@ export async function GET() {
             student: {
               include: {
                 user: {
-                  select: {
-                    name: true,
-                  },
+                  select: { name: true },
                 },
               },
             },
           },
         },
+        subject: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
-        startTime: 'desc',
+        createdAt: 'desc',
       },
     })
 

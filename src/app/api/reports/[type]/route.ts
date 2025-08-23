@@ -214,7 +214,7 @@ export async function GET(req: Request, context: { params: Promise<{ type: strin
         },
         subject: { select: { name: true, description: true } },
       },
-      orderBy: { startTime: 'desc' },
+      orderBy: { createdAt: 'desc' },
     })
   } else if (type === 'attendance') {
     const attendanceType = searchParams.get('attendanceType')
