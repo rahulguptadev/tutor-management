@@ -178,7 +178,6 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
               <tr>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School</th>
                 <th className="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subjects</th>
@@ -190,7 +189,6 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                 <tr key={student.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{idx + 1}</td>
                   <td className="px-6 py-3 whitespace-nowrap font-medium text-gray-900">{student.user.name}</td>
-                  <td className="px-6 py-3 whitespace-nowrap text-gray-700">{student.user.email}</td>
                   <td className="px-6 py-3 whitespace-nowrap text-gray-700">
                     {student.grade ? (
                       <div>
@@ -242,7 +240,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
               ))}
               {students.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-3 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-3 text-center text-gray-500">
                     No students found.
                   </td>
                 </tr>
